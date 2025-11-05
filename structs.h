@@ -8,7 +8,6 @@
 typefef struct jogador {
     Vector2 posicao;
     int vida;
-    int pontuação;
     char nome[TAMANHO_NOME];
 } jogador;
 
@@ -24,5 +23,21 @@ typedef struct portal{
     Vector2 tamanho;
     bool ativo;
 } portal;
+
+typedef struct jogo {
+    jogador jogador;
+    bool FimDeJogo;
+    int FaseAtual;
+    nivel fases[4];
+    ranking *Head;
+} jogo;
+
+typedef struct ranking {
+    char nome[TAMANHO_NOME];
+    int pontos;
+    int nivel;
+    double tempo;
+    struct ranking *prox;
+} ranking;
 
 #endif
