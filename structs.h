@@ -24,13 +24,14 @@ typedef struct portal{
     bool ativo;
 } portal;
 
-typedef struct jogo {
-    jogador jogador;
-    bool FimDeJogo;
-    int FaseAtual;
-    nivel fases[4];
-    ranking *Head;
-} jogo;
+typedef struct fases{
+    int numero;
+    obstaculo *obstaculos;
+    int quantidadeObstaculos;
+    portal saida;
+    vetor2 posicaoinicial;
+    bool completo;
+} fases;
 
 typedef struct ranking {
     char nome[TAMANHO_NOME];
@@ -39,5 +40,13 @@ typedef struct ranking {
     double tempo;
     struct ranking *prox;
 } ranking;
+
+typedef struct jogo {
+    jogador jogador;
+    bool FimDeJogo;
+    int FaseAtual;
+    nivel fases[4];
+    ranking *Head;
+} jogo;
 
 #endif
