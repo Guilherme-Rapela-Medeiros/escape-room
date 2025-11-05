@@ -5,7 +5,7 @@
 
 #include <raylib.h>
 
-typefef struct jogador {
+typedef struct jogador {
     Vector2 posicao;
     int vida;
     char nome[TAMANHO_NOME];
