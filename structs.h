@@ -29,7 +29,7 @@ typedef struct fases{
     obstaculo *obstaculos;
     int quantidadeObstaculos;
     portal saida;
-    vetor2 posicaoinicial;
+    Vector2 posicaoinicial;
     bool completo;
 } fases;
 
@@ -45,7 +45,7 @@ typedef struct jogo {
     jogador jogador;
     bool FimDeJogo;
     int FaseAtual;
-    nivel fases[4];
+    fases fases[4];
     ranking *Head;
 } jogo;
 
