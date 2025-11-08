@@ -5,9 +5,9 @@
 
 void comecarfase(fases fases[], int quantidade);   // inicializa as fases do jogo
 
-void acabarFases(fases fases[], int quantidade);  // inicializa as fases do jogo
+void acabarFases(fases fases[], int quantidade);  // finaliza e libera recursos das fases
 
-void atualizarFases(fases *faseAtual, jogador);  // atualiza os movimentos na fase atual
+void atualizarFases(fases *faseAtual, jogador *jogador);  // atualiza os movimentos na fase atual
 
 void desenharFase(fases *faseAtual, jogador *jogador);  // desenha os elementos da fase atual
 
