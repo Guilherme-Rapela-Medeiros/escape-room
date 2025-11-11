@@ -5,6 +5,10 @@
 
 #include <raylib.h>
 
+#define TRUE 1
+
+#define FALSE 0
+
 typedef struct jogador {
     Vector2 posicao;
     int vida;
@@ -15,13 +19,13 @@ typedef struct obstaculo{
     Vector2 posicao;
     Vector2 tamanho;
     Vector2 velocidade;
-    bool ativo;
+    int ativo;
 } obstaculo;
 
 typedef struct portal{
     Vector2 posicao;
     Vector2 tamanho;
-    bool ativo;
+    int ativo;
 } portal;
 
 typedef struct fases{
@@ -30,7 +34,7 @@ typedef struct fases{
     int quantidadeObstaculos;
     portal saida;
     Vector2 posicaoinicial;
-    bool completo;
+    int completo;
 } fases;
 
 typedef struct ranking {
@@ -43,7 +47,7 @@ typedef struct ranking {
 
 typedef struct jogo {
     jogador jogador;
-    bool FimDeJogo;
+    int FimDeJogo;
     int FaseAtual;
     fases fases[4];
     ranking *Head;
