@@ -20,7 +20,7 @@ void inputs_jogador_movimento(Rectangle *jogador, int largura_tela, int tamanho_
         }   // para o jogador não sair da tela para a extremidade esquerda
     }
 
-    if ((IsKeyPressed(KEY_SPACE) ) || (IsKeyDown(KEY_UP))){   // quando pressionado  a tecla de espaço ou seta para cima
+    if ((IsKeyPressed(KEY_SPACE) ) || (IsKeyPressed(KEY_UP))){   // quando pressionado  a tecla de espaço ou seta para cima
         jogador->y -= velocidade_jogador;   // muda posição vertical do jogador
         if (jogador->y < 0) {
             jogador->y = 0;  //  jogador não sair da tela para cima
