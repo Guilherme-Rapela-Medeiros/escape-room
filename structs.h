@@ -10,7 +10,7 @@
 #define FALSE 0
 
 typedef struct jogador {
-    Vector2 posicao;
+    Rectangle hitbox_jogador;
     int vida;
     char nome[TAMANHO_NOME];
 } jogador;
