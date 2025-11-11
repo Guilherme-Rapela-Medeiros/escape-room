@@ -36,14 +36,13 @@ int main(){
 
         desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);  // desenha a fase atual e o jogador
 
-        DrawText("Escape Room", 10, 10, 20, LIGHTGRAY) // desenha o título do jogo na tela
+        DrawText("Escape Room", 10, 10, 20, LIGHTGRAY); // desenha o título do jogo na tela
         EndDrawing();   // finaliza o desenho na tela
-        
-        acabarFases(EscapeRoom.fases, 4);  // finaliza e libera recursos das fases
-        CloseWindow(); // fecha a janela do jogo
-
-        return 0;
     }
 
+    // limpa recursos e fecha a janela após o loop principal
+    acabarFases(EscapeRoom.fases, 4);  // finaliza e libera recursos das fases
+    CloseWindow(); // fecha a janela do jogo
 
+    return 0;
 }
