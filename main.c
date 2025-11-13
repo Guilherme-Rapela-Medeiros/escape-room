@@ -1,50 +1,41 @@
 #include "raylib.h"
 #include "structs.h"
-#include "inputs.h"    // inclui todos os arquivos de cabeçalho necessários
+#include "inputs.h"
 #include "fases.h"
 
-#define LARGURA_TELA 800   // define a largura e a altura da tela
+#define LARGURA_TELA 800
 #define ALTURA_TELA 600
 
-int main(){
+int main() {
 
-    InitWindow(LARGURA_TELA, ALTURA_TELA, "Escape Room");  // inicializa a janela do jogo
+    InitWindow(LARGURA_TELA, ALTURA_TELA, "Escape Room");
+    SetTargetFPS(60);
 
-    SetTargetFPS(60);   // define a taxa de frames por segundo e o máximo que ele pode chegar
+    jogo EscapeRoom;
 
-    jogo EscapeRoom;   // cria uma variável do tipo jogo com nosso título
-
-    EscapeRoom.FimDeJogo = false;   // define o estado inicial do jogo como não terminado
-    EscapeRoom.FaseAtual = 0;       // define a fase atual como a primeira fase
+    EscapeRoom.FimDeJogo = false;
+    EscapeRoom.FaseAtual = 0;
 
     // --- Inicializa o jogador ---
-    EscapeRoom.jogador.posicao = (Vector2){LARGURA_TELA / 2, ALTURA_TELA / 2};  // posição inicial
-    EscapeRoom.jogador.vida = 3;       // vida inicial
+    EscapeRoom.jogador.vida = 3;
 
-    // --- Define o tamanho da hitbox do jogador ---
+    // Agora o Rectangle já guarda posição e tamanho
     EscapeRoom.jogador.hitbox_jogador = (Rectangle){
-        EscapeRoom.jogador.posicao.x, 
-        EscapeRoom.jogador.posicao.y, 
-        50, 50   // largura e altura do jogador
+        LARGURA_TELA / 2.0f, ALTURA_TELA / 2.0f, 50, 50
     };
 
     // --- Inicializa as fases ---
-    comecarfase(EscapeRoom.fases, 4);   // inicializa as fases do jogo
+    comecarfase(EscapeRoom.fases, 4);
 
-    // --- Loop principal do jogo ---
-    while (!WindowShouldClose() && !EscapeRoom.FimDeJogo){   
+    // --- Loop principal ---
+    while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
 
         // Atualiza posição do jogador conforme inputs
         inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA, 5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
 
-        // Atualiza a fase atual com base no estado do jogador
+        // Atualiza a fase atual com base no jogador
         atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
-        // Atualiza a hitbox com base na posição atual 
-        EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.jogador.posicao.x;
-        EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.jogador.posicao.y;
-
-        // Desenho
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -54,9 +45,8 @@ int main(){
         EndDrawing();
     }
 
-    // --- Finalização ---
-    acabarFases(EscapeRoom.fases, 4);  // finaliza e libera recursos das fases
-    CloseWindow(); // fecha a janela do jogo
+    acabarFases(EscapeRoom.fases, 4);
+    CloseWindow();
 
     return 0;
 }
