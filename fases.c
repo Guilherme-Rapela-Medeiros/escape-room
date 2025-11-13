@@ -61,7 +61,7 @@ void acabarFases(fases fasesArray[], int quantidade) {
 void atualizarFases(fases *fase, jogador *jogador) {
     if (!fase || !jogador) return;
 
-    Rectangle rJogador = { jogador->posicao.x, jogador->posicao.y, JOGADOR_LARGURA, JOGADOR_ALTURA };
+    Rectangle rJogador = jogador->hitbox_jogador;
 
     for (int i = 0; i < fase->quantidadeObstaculos; i++) {
         obstaculo *o = &fase->obstaculos[i];
@@ -110,7 +110,7 @@ void desenharFase(fases *fase, jogador *jogador) {
         DrawRectangleV(fase->saida.posicao, fase->saida.tamanho, BLUE);
 
     // Jogador
-    DrawRectangle((int)jogador->posicao.x, (int)jogador->posicao.y, JOGADOR_LARGURA, JOGADOR_ALTURA, GREEN);
+    DrawRectangle((int)jogador->hitbox_jogador.x, (int)jogador->hitbox_jogador.y, (int)jogador->hitbox_jogador.width, (int)jogador->hitbox_jogador.height, GREEN);
 
     // HUD simples
     DrawText(TextFormat("Vida: %d", jogador->vida), 10, 40, 20, BLACK);
