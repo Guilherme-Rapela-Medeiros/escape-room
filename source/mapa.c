@@ -1,6 +1,6 @@
 #include "../includes/mapa.h"
 #include "raylib.h"
-#include "structs.h"
+#include "../includes/structs.h"
 #include <stdio.h>
 
 // ============================================
@@ -143,15 +143,15 @@ void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], TexturasMapa *texturas) {
 
                 case BLOCO_OBSTACULO:
                     DrawRectangle((int)x, (int)y, TAMANHO_BLOCO, TAMANHO_BLOCO, RED);
-                    DrawRectangleLines((int)x, (int)y, TAMANHO_BLOCO, TAMANHO_BLOCO, DARKRED);
-                    DrawLine((int)x, (int)y, (int)(x + TAMANHO_BLOCO), (int)(y + TAMANHO_BLOCO), DARKRED);
-                    DrawLine((int)(x + TAMANHO_BLOCO), (int)y, (int)x, (int)(y + TAMANHO_BLOCO), DARKRED);
+                    DrawRectangleLines((int)x, (int)y, TAMANHO_BLOCO, TAMANHO_BLOCO, MAROON);
+                    DrawLine((int)x, (int)y, (int)(x + TAMANHO_BLOCO), (int)(y + TAMANHO_BLOCO), MAROON);
+                    DrawLine((int)(x + TAMANHO_BLOCO), (int)y, (int)x, (int)(y + TAMANHO_BLOCO), MAROON);
                     break;
 
                 case BLOCO_PORTAL:
                     DrawRectangle((int)x, (int)y, TAMANHO_BLOCO, TAMANHO_BLOCO, BLUE);
                     DrawRectangleLines((int)x, (int)y, TAMANHO_BLOCO, TAMANHO_BLOCO, DARKBLUE);
-                    DrawCircle((int)(x + TAMANHO_BLOCO / 2), (int)(y + TAMANHO_BLOCO / 2), TAMANHO_BLOCO / 4, LIGHTBLUE);
+                    DrawCircle((int)(x + TAMANHO_BLOCO / 2), (int)(y + TAMANHO_BLOCO / 2), TAMANHO_BLOCO / 4, SKYBLUE);
                     break;
 
                 case BLOCO_VAZIO:
