@@ -1,4 +1,6 @@
 #include "../includes/mapa.h"
+#include "raylib.h"
+#include "structs.h"
 #include <stdio.h>
 
 // ============================================
