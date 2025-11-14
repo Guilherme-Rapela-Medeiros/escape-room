@@ -1,4 +1,4 @@
-#include "inputs.h"
+#include "../includes/inputs.h"
 #include "raylib.h"
 
 void inputs_jogador_movimento(jogador *jogador, int largura_tela, int altura_tela, int velocidade_jogador, obstaculo *obstaculos) {

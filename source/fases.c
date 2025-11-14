@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "fases.h"
+#include "../includes/fases.h"
 #include "raylib.h"
 
 // Tamanho padrão do jogador

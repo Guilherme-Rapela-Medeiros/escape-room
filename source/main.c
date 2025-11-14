@@ -1,7 +1,7 @@
 #include "raylib.h"
-#include "structs.h"
-#include "inputs.h"
-#include "fases.h"
+#include "../includes/structs.h"
+#include "../includes/inputs.h"
+#include "../includes/fases.h"
 
 #define LARGURA_TELA 800
 #define ALTURA_TELA 600
