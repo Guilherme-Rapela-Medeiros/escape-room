@@ -9,6 +9,15 @@
 
 #define FALSE 0
 
+typedef enum {
+    TELA_MENU,
+    TELA_TUTORIAL,
+    TELA_FASES,
+    TELA_JOGO,
+    TELA_RANKING,
+    TELA_FINAL
+} TelaAtual;
+
 typedef struct jogador {
     Rectangle hitbox_jogador;
     int vida;
