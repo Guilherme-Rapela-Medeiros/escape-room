@@ -12,7 +12,7 @@ int main() {
     SetTargetFPS(60);
 
     // Carrega imagem do menu
-    Image menuImg = LoadImage("../assets/imagens/menu.inicial.png");
+    Image menuImg = LoadImage("../assents/imagens/menu.inicial.png");
     Texture2D menuTextura = LoadTextureFromImage(menuImg);
     UnloadImage(menuImg);
 
@@ -34,7 +34,7 @@ int main() {
 
     // --- Loop principal ---
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
-        
+
  // Verifica se a fase terminou e troca de fase
         if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
 
