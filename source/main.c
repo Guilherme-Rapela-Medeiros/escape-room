@@ -12,7 +12,7 @@ int main() {
     SetTargetFPS(60);
 
     // Carrega imagem do menu
-    Image menuImg = LoadImage("../assents/imagens/menu.inicial.png");
+    Image menuImg = LoadImage("../assets/imagens/menu.inicial.png");
     Texture2D menuTextura = LoadTextureFromImage(menuImg);
     UnloadImage(menuImg);
 
