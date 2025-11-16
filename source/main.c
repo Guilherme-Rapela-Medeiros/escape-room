@@ -28,16 +28,27 @@ int main() {
     EscapeRoom.jogador.hitbox_jogador = (Rectangle){
         LARGURA_TELA / 2.0f, ALTURA_TELA / 2.0f, 50, 50
     };
-    EscapeRoom.jogador.vel_x = 0.0f;
-    EscapeRoom.jogador.vel_y = 0.0f;
-    EscapeRoom.jogador.grounded = FALSE;
 
     // --- Inicializa as fases ---
     comecarfase(EscapeRoom.fases, 4);
 
     // --- Loop principal ---
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
+        
+ // Verifica se a fase terminou e troca de fase
+        if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
 
+            EscapeRoom.FaseAtual++;
+
+            // Se acabou todas as fases → termina o jogo
+        if (EscapeRoom.FaseAtual >= 4) {
+            EscapeRoom.FimDeJogo = true;
+            } else {
+            // Reseta posição do jogador para a próxima fase
+                EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
+                EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
+                }
+            }
         // Menu
         if (menuAtivo) {
             BeginDrawing();
