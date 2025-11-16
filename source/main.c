@@ -35,6 +35,21 @@ int main() {
 
         // Atualiza a fase atual com base no jogador
         atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
+        // Verifica se a fase terminou e troca de fase
+        if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
+
+            EscapeRoom.FaseAtual++;
+
+            // Se acabou todas as fases → termina o jogo
+        if (EscapeRoom.FaseAtual >= 4) {
+            EscapeRoom.FimDeJogo = true;
+            } else {
+            // Reseta posição do jogador para a próxima fase
+                EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
+                EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
+                }
+            }
+
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
