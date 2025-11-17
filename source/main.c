@@ -3,8 +3,8 @@
 #include "../includes/inputs.h"
 #include "../includes/fases.h"
 
-#define LARGURA_TELA 800
-#define ALTURA_TELA 600
+#define LARGURA_TELA 756
+#define ALTURA_TELA 817
 
 int main() {
 
