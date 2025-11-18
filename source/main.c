@@ -23,20 +23,20 @@ int main(void) {
     SetTargetFPS(60);
 
     // Carrega imagem do menu (verifica se carregou)
-    Image menuImg = LoadImage("assets/imagens/menu_inicial.png");
+    Image menuImg = LoadImage("assets/imagens/menu.inicial.png");
     Texture2D menuTextura = {0};
     if (menuImg.data == NULL) {
-        printf("Aviso: menu_inicial.png nao carregou (verifique o caminho).\n");
+        printf("Aviso: menu.inicial.png nao carregou (verifique o caminho).\n");
     } else {
         menuTextura = LoadTextureFromImage(menuImg);
         UnloadImage(menuImg);
     }
 
     // Carrega tutorial
-    Image tutorialImg = LoadImage("assets/imagens/tela_tutorial.png");
+    Image tutorialImg = LoadImage("assets/imagens/tela.tutorial.png");
     Texture2D tutorialTextura = {0};
     if (tutorialImg.data == NULL) {
-        printf("Aviso: tela_tutorial.png nao carregou (verifique o caminho).\n");
+        printf("Aviso: tela.tutorial.png nao carregou (verifique o caminho).\n");
     } else {
         tutorialTextura = LoadTextureFromImage(tutorialImg);
         UnloadImage(tutorialImg);
