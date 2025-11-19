@@ -1,4 +1,4 @@
-// main.c (completo e atualizado)
+// main.c (completo e atualizado) - com sistema de tempo integrado (pausa em "iniciar fase", acumula apenas em TELA_FASES)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,9 +19,29 @@ typedef struct {
     bool hovered;
 } Botao;
 
+/* Helper para formatar tempo em MM:SS.mmm */
+static void formatar_tempo(double tempo, char *out, size_t outlen) {
+    if (!out) return;
+    int minutos = (int)(tempo / 60.0);
+    double restante = tempo - (minutos * 60);
+    int segundos = (int)restante;
+    int miles = (int)((restante - segundos) * 1000.0 + 0.5); // arredonda milissegundos
+    if (miles >= 1000) { miles = 0; segundos += 1; }
+    if (segundos >= 60) { segundos = 0; minutos += 1; }
+    snprintf(out, outlen, "%02d:%02d.%03d", minutos, segundos, miles);
+}
+
 int main(void) {
     InitWindow(LARGURA_TELA, ALTURA_TELA, "Escape Room");
     SetTargetFPS(60);
+
+    // =============================
+    // SISTEMA DE TEMPO (<<< TEMPO)
+    // tempoTotal: acumulado entre todas as fases
+    // tempoRodando: true enquanto estiver em TELA_FASES contando
+    // =============================
+    double tempoTotal = 0.0;
+    bool tempoRodando = false;
 
     // --- Carrega imagens ---
     Image menuImg = LoadImage("assets/imagens/menu.inicial.png");
@@ -147,6 +167,10 @@ int main(void) {
 
                     case 0: // START GAME
                         EscapeRoom.FaseAtual = 0;
+                        // <<< TEMPO: zera o cronômetro quando iniciar um novo jogo
+                        tempoTotal = 0.0;
+                        tempoRodando = false;
+                        //
                         telaAtual = TELA_JOGO; // tela "iniciar fase"
                         telaJustChanged = true;
                         break;
@@ -183,6 +207,9 @@ int main(void) {
             }
 
             if (clicou) {
+                // <<< TEMPO: ao começar a fase, ativa a contagem
+                tempoRodando = true;
+                //
                 telaAtual = TELA_FASES;
                 EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
                 EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
@@ -214,6 +241,12 @@ int main(void) {
         // ============ FASE ATIVA ============
         if (telaAtual == TELA_FASES) {
 
+            // <<< TEMPO: acumula tempo apenas enquanto estiver em TELA_FASES
+            if (tempoRodando) {
+                tempoTotal += GetFrameTime();
+            }
+            // <<< FIM TEMPO
+
             if (EscapeRoom.FaseAtual < TOTAL_FASES) {
                 inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA,
                                          5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
@@ -221,10 +254,17 @@ int main(void) {
                 atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
+                    // <<< TEMPO: ao encostar no portal, pausa o contador (fase concluída)
+                    tempoRodando = false;
+                    // <<< FIM TEMPO
+
                     EscapeRoom.FaseAtual++;
                     if (EscapeRoom.FaseAtual >= TOTAL_FASES) {
                         EscapeRoom.FaseAtual = TOTAL_FASES;
                         EscapeRoom.FimDeJogo = TRUE;
+
+                        // opcional: imprimir tempo final no terminal
+                        printf("\nTempo final acumulado: %.3f segundos\n", tempoTotal);
                     } else {
                         telaAtual = TELA_JOGO;
                         telaJustChanged = true;
@@ -280,8 +320,6 @@ int main(void) {
                     DrawTexture(iniciarTexturas[fase], 0, 0, WHITE);
                 }
 
-
-
                 int faseMostrada = EscapeRoom.FaseAtual + 1;
 
                 DrawText(TextFormat("FASE %d", faseMostrada), 300, 200, 48, YELLOW);
@@ -305,6 +343,11 @@ int main(void) {
                 DrawText("BACKSPACE PARA VOLTAR AO MENU",
                          170, 770, 18, LIGHTGRAY);
 
+                // Mostrar tempo acumulado também na tela "iniciar fase" (formatado)
+                char bufTempo[32];
+                formatar_tempo(tempoTotal, bufTempo, sizeof(bufTempo));
+                DrawText(TextFormat("TEMPO: %s", bufTempo), 10, 70, 20, LIGHTGRAY);
+
             } break;
 
             // -------- RANKING --------
@@ -319,14 +362,19 @@ int main(void) {
             case TELA_FASES: {
                 // Proteção: só desenhar se o índice estiver dentro dos limites do array
                 if (EscapeRoom.FaseAtual >= 0 && EscapeRoom.FaseAtual < TOTAL_FASES) {
-                desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
+                    desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
-                DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1),
-                 10, 10, 20, LIGHTGRAY);
-                DrawText(TextFormat("Vida: %d", EscapeRoom.jogador.vida),
-                 10, 40, 20, LIGHTGRAY);
-                }
-                else {
+                    // HUD no canto superior esquerdo: Fase, Vida, Tempo formatado MM:SS.mmm
+                    DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1),
+                             10, 10, 20, LIGHTGRAY);
+                    DrawText(TextFormat("Vida: %d", EscapeRoom.jogador.vida),
+                             10, 40, 20, LIGHTGRAY);
+
+                    char bufTempo[32];
+                    formatar_tempo(tempoTotal, bufTempo, sizeof(bufTempo));
+                    DrawText(TextFormat("Tempo: %s", bufTempo),
+                             10, 70, 20, LIGHTGRAY);
+                } else {
                     // Caso excepcional: índice inválido — mostra mensagem segura ao invés de crashar
                     DrawText("Nenhuma fase ativa (indice invalido)", 80, 200, 20, RED);
                     DrawText("Pressione BACKSPACE para voltar ao menu", 80, 240, 18, LIGHTGRAY);
@@ -337,10 +385,9 @@ int main(void) {
                         telaJustChanged = true;
                     }
                 }
-} break;
+            } break;
 
         }
-
         EndDrawing();
 
         telaJustChanged = false;
