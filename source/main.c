@@ -38,11 +38,32 @@ int main(void) {
         UnloadImage(tutorialImg);
     }
 
-    Image iniciarImg = LoadImage("assets/imagens/iniciar_fase.png");
-    Texture2D iniciarTextura = {0};
-    if (iniciarImg.data != NULL) {
-        iniciarTextura = LoadTextureFromImage(iniciarImg);
-        UnloadImage(iniciarImg);
+    Image iniciar1Img = LoadImage("assets/imagens/iniciar.fase1.png");
+    Texture2D iniciar1Textura = {0};
+    if (iniciar1Img.data != NULL) {
+        iniciar1Textura = LoadTextureFromImage(iniciar1Img);
+        UnloadImage(iniciar1Img);
+    }
+
+    Image iniciar2Img = LoadImage("assets/imagens/iniciar.fase2.png");
+    Texture2D iniciar2Textura = {0};
+    if (iniciar2Img.data != NULL) {
+        iniciar2Textura = LoadTextureFromImage(iniciar2Img);
+        UnloadImage(iniciar2Img);
+    }
+
+    Image iniciar3Img = LoadImage("assets/imagens/iniciar.fase3.png");
+    Texture2D iniciar3Textura = {0};
+    if (iniciar3Img.data != NULL) {
+        iniciar3Textura = LoadTextureFromImage(iniciar3Img);
+        UnloadImage(iniciar3Img);
+    }
+
+    Image iniciar4Img = LoadImage("assets/imagens/iniciar.fase4.png");
+    Texture2D iniciar4Textura = {0};
+    if (iniciar4Img.data != NULL) {
+        iniciar4Textura = LoadTextureFromImage(iniciar4Img);
+        UnloadImage(iniciar4Img);
     }
 
     // --- Estruturas principais ---
@@ -250,7 +271,7 @@ int main(void) {
 
             // -------- INICIAR FASE --------
             case TELA_JOGO: {
-                if (iniciarTextura.id != 0) DrawTexture(iniciarTextura, 0, 0, WHITE);
+                if (iniciar4Textura.id != 0) DrawTexture(iniciar4Textura, 0, 0, WHITE);
 
                 int faseMostrada = EscapeRoom.FaseAtual + 1;
 
@@ -304,7 +325,7 @@ int main(void) {
     // cleanup
     if (menuTextura.id != 0) UnloadTexture(menuTextura);
     if (tutorialTextura.id != 0) UnloadTexture(tutorialTextura);
-    if (iniciarTextura.id != 0) UnloadTexture(iniciarTextura);
+    if (iniciar4Textura.id != 0) UnloadTexture(iniciar4Textura);
 
     acabarFases(EscapeRoom.fases, TOTAL_FASES);
     CloseWindow();
