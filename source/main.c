@@ -66,6 +66,8 @@ int main(void) {
         UnloadImage(iniciar4Img);
     }
 
+    Texture2D iniciarTexturas[4] = {iniciar1Textura, iniciar2Textura, iniciar3Textura, iniciar4Textura};
+
     // --- Estruturas principais ---
     jogo EscapeRoom;
     EscapeRoom.FimDeJogo = FALSE;
@@ -271,7 +273,13 @@ int main(void) {
 
             // -------- INICIAR FASE --------
             case TELA_JOGO: {
-                if (iniciar4Textura.id != 0) DrawTexture(iniciar4Textura, 0, 0, WHITE);
+
+                int fase = EscapeRoom.FaseAtual;
+                if (fase >= 0 && fase < TOTAL_FASES && iniciarTexturas[fase].id != 0){
+                    DrawTexture(iniciarTexturas[fase], 0, 0, WHITE);
+                }
+
+
 
                 int faseMostrada = EscapeRoom.FaseAtual + 1;
 
@@ -325,8 +333,11 @@ int main(void) {
     // cleanup
     if (menuTextura.id != 0) UnloadTexture(menuTextura);
     if (tutorialTextura.id != 0) UnloadTexture(tutorialTextura);
-    if (iniciar4Textura.id != 0) UnloadTexture(iniciar4Textura);
-
+    for (int i = 0; i < 4; i++){
+        if (iniciarTexturas[i].id != 0){
+            UnloadTexture(iniciarTexturas[i]);
+        }
+    }
     acabarFases(EscapeRoom.fases, TOTAL_FASES);
     CloseWindow();
     return 0;
