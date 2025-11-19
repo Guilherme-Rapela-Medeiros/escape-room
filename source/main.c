@@ -223,6 +223,7 @@ int main(void) {
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
                     EscapeRoom.FaseAtual++;
                     if (EscapeRoom.FaseAtual >= TOTAL_FASES) {
+                        EscapeRoom.FaseAtual = TOTAL_FASES;
                         EscapeRoom.FimDeJogo = TRUE;
                     } else {
                         telaAtual = TELA_JOGO;
@@ -316,13 +317,28 @@ int main(void) {
 
             // -------- FASE ATIVA --------
             case TELA_FASES: {
+                // Proteção: só desenhar se o índice estiver dentro dos limites do array
+                if (EscapeRoom.FaseAtual >= 0 && EscapeRoom.FaseAtual < TOTAL_FASES) {
                 desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
-                DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual+1),
-                         10, 10, 20, LIGHTGRAY);
+                DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1),
+                 10, 10, 20, LIGHTGRAY);
                 DrawText(TextFormat("Vida: %d", EscapeRoom.jogador.vida),
-                         10, 40, 20, LIGHTGRAY);
-            } break;
+                 10, 40, 20, LIGHTGRAY);
+                }
+                else {
+                    // Caso excepcional: índice inválido — mostra mensagem segura ao invés de crashar
+                    DrawText("Nenhuma fase ativa (indice invalido)", 80, 200, 20, RED);
+                    DrawText("Pressione BACKSPACE para voltar ao menu", 80, 240, 18, LIGHTGRAY);
+
+                    // opcional: garantir que o jogador possa voltar com BACKSPACE
+                    if (IsKeyPressed(KEY_BACKSPACE)) {
+                        telaAtual = TELA_MENU;
+                        telaJustChanged = true;
+                    }
+                }
+} break;
+
         }
 
         EndDrawing();
