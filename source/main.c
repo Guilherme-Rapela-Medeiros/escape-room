@@ -1,4 +1,4 @@
-// main.c (corrigido)
+// main.c (completo e atualizado)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +11,7 @@
 
 #define LARGURA_TELA 756
 #define ALTURA_TELA 817
+#define TOTAL_FASES 4
 
 typedef struct {
     Rectangle rect;
@@ -22,213 +23,290 @@ int main(void) {
     InitWindow(LARGURA_TELA, ALTURA_TELA, "Escape Room");
     SetTargetFPS(60);
 
-    // Carrega imagem do menu (verifica se carregou)
+    // --- Carrega imagens ---
     Image menuImg = LoadImage("assets/imagens/menu.inicial.png");
     Texture2D menuTextura = {0};
-    if (menuImg.data == NULL) {
-        printf("Aviso: menu.inicial.png nao carregou (verifique o caminho).\n");
-    } else {
+    if (menuImg.data != NULL) {
         menuTextura = LoadTextureFromImage(menuImg);
         UnloadImage(menuImg);
     }
 
-    // Carrega tutorial
     Image tutorialImg = LoadImage("assets/imagens/tela.tutorial.png");
     Texture2D tutorialTextura = {0};
-    if (tutorialImg.data == NULL) {
-        printf("Aviso: tela.tutorial.png nao carregou (verifique o caminho).\n");
-    } else {
+    if (tutorialImg.data != NULL) {
         tutorialTextura = LoadTextureFromImage(tutorialImg);
         UnloadImage(tutorialImg);
     }
 
-    // --- Inicializa jogo/estruturas ---
+    Image iniciarImg = LoadImage("assets/imagens/iniciar_fase.png");
+    Texture2D iniciarTextura = {0};
+    if (iniciarImg.data != NULL) {
+        iniciarTextura = LoadTextureFromImage(iniciarImg);
+        UnloadImage(iniciarImg);
+    }
+
+    // --- Estruturas principais ---
     jogo EscapeRoom;
     EscapeRoom.FimDeJogo = FALSE;
     EscapeRoom.FaseAtual = 0;
 
-    // --- Inicializa o jogador ---
+    // jogador
     EscapeRoom.jogador.vida = 3;
     EscapeRoom.jogador.hitbox_jogador = (Rectangle){
-        LARGURA_TELA / 2.0f - 25.0f, ALTURA_TELA / 2.0f - 25.0f, 50, 50
+        LARGURA_TELA / 2.0f - 25, ALTURA_TELA / 2.0f - 25, 50, 50
     };
 
-    // --- Inicializa as fases ---
-    comecarfase(EscapeRoom.fases, 4);
+    // inicializa fases
+    comecarfase(EscapeRoom.fases, TOTAL_FASES);
 
-    // Proteção: garanta que exista ao menos uma fase antes de usar posicaoinicial
     if (EscapeRoom.fases != NULL) {
         EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[0].posicaoinicial.x;
         EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[0].posicaoinicial.y;
     }
 
-    // Controle de telas (usa enum TelaAtual em includes/structs.h)
     TelaAtual telaAtual = TELA_MENU;
+    bool telaJustChanged = false;
 
-    // --- Cria botões ---
+    // --- Botões do menu ---
     const int nBotoes = 4;
     Botao botoes[nBotoes];
-    int bw = 320;   // largura do botão
-    int bh = 48;    // altura do botão
+
+    int bw = 320;
+    int bh = 48;
     int bx = (LARGURA_TELA - bw) / 2;
     int startY = 380;
     int espacamento = 64;
 
-    botoes[0].rect = (Rectangle){ bx, startY + 0 * espacamento, bw, bh };
-    botoes[0].texto = "START GAME";
-    botoes[1].rect = (Rectangle){ bx, startY + 1 * espacamento, bw, bh };
-    botoes[1].texto = "TUTORIAL";
-    botoes[2].rect = (Rectangle){ bx, startY + 2 * espacamento, bw, bh };
-    botoes[2].texto = "RANKING";
-    botoes[3].rect = (Rectangle){ bx, startY + 3 * espacamento, bw, bh };
-    botoes[3].texto = "EXIT GAME";
+    botoes[0] = (Botao){ (Rectangle){bx, startY + 0*espacamento, bw, bh}, "START GAME", false };
+    botoes[1] = (Botao){ (Rectangle){bx, startY + 1*espacamento, bw, bh}, "TUTORIAL", false };
+    botoes[2] = (Botao){ (Rectangle){bx, startY + 2*espacamento, bw, bh}, "RANKING", false };
+    botoes[3] = (Botao){ (Rectangle){bx, startY + 3*espacamento, bw, bh}, "EXIT GAME", false };
 
-    for (int i = 0; i < nBotoes; i++) botoes[i].hovered = false;
     int selecionado = 0;
-    botoes[selecionado].hovered = true;
+    botoes[0].hovered = true;
 
-    // Loop principal
+    // =============================
+    //        LOOP PRINCIPAL
+    // =============================
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
 
-        // Atualização de inputs / navegação
+        // ============ MENU ============
         if (telaAtual == TELA_MENU) {
+
             if (IsKeyPressed(KEY_DOWN)) selecionado = (selecionado + 1) % nBotoes;
             else if (IsKeyPressed(KEY_UP)) selecionado = (selecionado - 1 + nBotoes) % nBotoes;
 
             Vector2 mouse = GetMousePosition();
-            bool algumHover = false;
+
             for (int i = 0; i < nBotoes; i++) {
                 if (CheckCollisionPointRec(mouse, botoes[i].rect)) {
                     botoes[i].hovered = true;
                     selecionado = i;
-                    algumHover = true;
                 } else {
                     botoes[i].hovered = (i == selecionado);
                 }
             }
 
-            bool ativouBotao = false;
+            bool ativou = false;
+
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 for (int i = 0; i < nBotoes; i++) {
                     if (CheckCollisionPointRec(mouse, botoes[i].rect)) {
                         selecionado = i;
-                        ativouBotao = true;
+                        ativou = true;
                         break;
                     }
                 }
             }
 
-            if (IsKeyPressed(KEY_ENTER) || ativouBotao) {
+            if (IsKeyPressed(KEY_ENTER) || ativou) {
                 switch (selecionado) {
-                    case 0: telaAtual = TELA_TUTORIAL; break;
-                    case 1: telaAtual = TELA_TUTORIAL; break;
-                    case 2: telaAtual = TELA_RANKING; break;
-                    case 3: EscapeRoom.FimDeJogo = TRUE; break;
+
+                    case 0: // START GAME
+                        EscapeRoom.FaseAtual = 0;
+                        telaAtual = TELA_JOGO; // tela "iniciar fase"
+                        telaJustChanged = true;
+                        break;
+
+                    case 1: // TUTORIAL
+                        telaAtual = TELA_TUTORIAL;
+                        telaJustChanged = true;
+                        break;
+
+                    case 2: // RANKING
+                        telaAtual = TELA_RANKING;
+                        telaJustChanged = true;
+                        break;
+
+                    case 3: // EXIT
+                        EscapeRoom.FimDeJogo = TRUE;
+                        break;
                 }
             }
         }
 
-        // Lógica do jogo somente em TELA_FASES
+        // ============ TELA "INICIAR FASE" ============
+        if (telaAtual == TELA_JOGO) {
+
+            Vector2 mouse = GetMousePosition();
+            Rectangle btn = { 238, 500, 280, 70 };
+            bool hover = CheckCollisionPointRec(mouse, btn);
+
+            bool clicou = false;
+
+            if (!telaJustChanged) {
+                if ((hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
+                    clicou = true;
+            }
+
+            if (clicou) {
+                telaAtual = TELA_FASES;
+                EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
+                EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
+                telaJustChanged = true;
+            }
+
+            if (IsKeyPressed(KEY_BACKSPACE)) {
+                telaAtual = TELA_MENU;
+                telaJustChanged = true;
+            }
+        }
+
+        // ============ TUTORIAL ============
+        if (telaAtual == TELA_TUTORIAL) {
+            if (IsKeyPressed(KEY_BACKSPACE)) {
+                telaAtual = TELA_MENU;
+                telaJustChanged = true;
+            }
+        }
+
+        // ============ RANKING ============
+        if (telaAtual == TELA_RANKING) {
+            if (IsKeyPressed(KEY_BACKSPACE)) {
+                telaAtual = TELA_MENU;
+                telaJustChanged = true;
+            }
+        }
+
+        // ============ FASE ATIVA ============
         if (telaAtual == TELA_FASES) {
-            // segurança: checar limites de fases
-            if (EscapeRoom.FaseAtual < 0) EscapeRoom.FaseAtual = 0;
-            if (EscapeRoom.FaseAtual >= 4) EscapeRoom.FimDeJogo = TRUE;
-            else {
-                inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA, 5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
+
+            if (EscapeRoom.FaseAtual < TOTAL_FASES) {
+                inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA,
+                                         5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
+
                 atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
                     EscapeRoom.FaseAtual++;
-                    if (EscapeRoom.FaseAtual >= 4) EscapeRoom.FimDeJogo = TRUE;
-                    else {
-                        EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
-                        EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
+                    if (EscapeRoom.FaseAtual >= TOTAL_FASES) {
+                        EscapeRoom.FimDeJogo = TRUE;
+                    } else {
+                        telaAtual = TELA_JOGO;
+                        telaJustChanged = true;
                     }
                 }
             }
         }
 
-        // --- DESENHO: apenas UM BeginDrawing / EndDrawing por frame ---
+        // =============================
+        //          DESENHO
+        // =============================
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
 
         switch (telaAtual) {
+
+            // -------- MENU --------
             case TELA_MENU: {
-                ClearBackground(BLACK);
                 if (menuTextura.id != 0) DrawTexture(menuTextura, 0, 0, WHITE);
 
                 for (int i = 0; i < nBotoes; i++) {
+
                     Color corFundo = botoes[i].hovered ? Fade(SKYBLUE, 0.95f) : Fade(DARKGRAY, 0.8f);
                     Color corBorda = botoes[i].hovered ? BLUE : GRAY;
+
                     DrawRectangleRec(botoes[i].rect, corFundo);
                     DrawRectangleLinesEx(botoes[i].rect, 2, corBorda);
 
                     int fontSize = 20;
-                    int textWidth = MeasureText(botoes[i].texto, fontSize);
-                    float tx = botoes[i].rect.x + (botoes[i].rect.width - textWidth) / 2.0f;
-                    float ty = botoes[i].rect.y + (botoes[i].rect.height - fontSize) / 2.0f - 2;
-                    DrawText(botoes[i].texto, (int)tx, (int)ty, fontSize, BLACK);
+                    int tw = MeasureText(botoes[i].texto, fontSize);
+                    float tx = botoes[i].rect.x + (botoes[i].rect.width - tw)/2;
+                    float ty = botoes[i].rect.y + (botoes[i].rect.height - fontSize)/2 - 2;
+                    DrawText(botoes[i].texto, tx, ty, fontSize, BLACK);
                 }
 
-                DrawText("Use UP/DOWN para navegar, ENTER para selecionar, clique também funciona", 60, ALTURA_TELA - 50, 14, LIGHTGRAY);
+                DrawText("Use UP/DOWN para navegar, ENTER para selecionar",
+                         60, ALTURA_TELA - 50, 14, LIGHTGRAY);
+
             } break;
 
+            // -------- TUTORIAL --------
             case TELA_TUTORIAL: {
-                ClearBackground(BLACK);
                 if (tutorialTextura.id != 0) DrawTexture(tutorialTextura, 0, 0, WHITE);
-                DrawText("APERTE ENTER PARA COMECAR", 180, 750, 24, GREEN);
-                DrawText("BACKSPACE PARA VOLTAR", 220, 780, 20, LIGHTGRAY);
-
-                // Entradas para trocar de tela (coloque fora do Begin/End se preferir; aqui é ok)
-                if (IsKeyPressed(KEY_ENTER)) {
-                    EscapeRoom.FaseAtual = 0;
-                    EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[0].posicaoinicial.x;
-                    EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[0].posicaoinicial.y;
-                    telaAtual = TELA_FASES;
-                }
-                if (IsKeyPressed(KEY_BACKSPACE)) {
-                    telaAtual = TELA_MENU;
-                }
+                DrawText("TUTORIAL - APERTE BACKSPACE PARA VOLTAR",
+                         120, ALTURA_TELA - 40, 18, LIGHTGRAY);
             } break;
 
+            // -------- INICIAR FASE --------
+            case TELA_JOGO: {
+                if (iniciarTextura.id != 0) DrawTexture(iniciarTextura, 0, 0, WHITE);
+
+                int faseMostrada = EscapeRoom.FaseAtual + 1;
+
+                DrawText(TextFormat("FASE %d", faseMostrada), 300, 200, 48, YELLOW);
+
+                // Botão começar
+                Rectangle btn = { 238, 500, 280, 70 };
+                Vector2 mouse = GetMousePosition();
+                int hover = CheckCollisionPointRec(mouse, btn);
+
+                Color corFundo = hover ? Fade(GREEN, 0.9f) : Fade(DARKGREEN, 0.8f);
+                Color corBorda = hover ? YELLOW : BLACK;
+
+                DrawRectangleRec(btn, corFundo);
+                DrawRectangleLinesEx(btn, 3, corBorda);
+
+                int tf = 30;
+                int tw = MeasureText("COMEÇAR", tf);
+
+                DrawText("COMEÇAR", btn.x + (btn.width - tw)/2, btn.y + 18, tf, WHITE);
+
+                DrawText("BACKSPACE PARA VOLTAR AO MENU",
+                         170, 770, 18, LIGHTGRAY);
+
+            } break;
+
+            // -------- RANKING --------
             case TELA_RANKING: {
-                ClearBackground(BLACK);
                 DrawText("RANKING (exemplo)", 220, 80, 36, YELLOW);
                 DrawText("1) JogadorA - 1000", 200, 180, 22, WHITE);
                 DrawText("2) JogadorB - 800", 200, 220, 22, WHITE);
                 DrawText("APERTE BACKSPACE PARA VOLTAR", 180, 560, 20, LIGHTGRAY);
-
-                if (IsKeyPressed(KEY_BACKSPACE)) {
-                    telaAtual = TELA_MENU;
-                }
             } break;
 
+            // -------- FASE ATIVA --------
             case TELA_FASES: {
-                ClearBackground(RAYWHITE);
-                // Proteção: checar limites antes de desenhar a fase
-                if (EscapeRoom.FaseAtual >= 0 && EscapeRoom.FaseAtual < 4) {
-                    desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
-                    DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1), 10, 10, 20, LIGHTGRAY);
-                    DrawText(TextFormat("Vida: %d", EscapeRoom.jogador.vida), 10, 40, 20, LIGHTGRAY);
-                } else {
-                    DrawText("Erro: Fase invalida", 10, 10, 20, RED);
-                }
-            } break;
+                desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
-            default:
-                telaAtual = TELA_MENU;
-                break;
+                DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual+1),
+                         10, 10, 20, LIGHTGRAY);
+                DrawText(TextFormat("Vida: %d", EscapeRoom.jogador.vida),
+                         10, 40, 20, LIGHTGRAY);
+            } break;
         }
 
         EndDrawing();
-    } // while
 
-    // Cleanup
+        telaJustChanged = false;
+    }
+
+    // cleanup
     if (menuTextura.id != 0) UnloadTexture(menuTextura);
     if (tutorialTextura.id != 0) UnloadTexture(tutorialTextura);
+    if (iniciarTextura.id != 0) UnloadTexture(iniciarTextura);
 
-    acabarFases(EscapeRoom.fases, 4);
+    acabarFases(EscapeRoom.fases, TOTAL_FASES);
     CloseWindow();
-
     return 0;
 }
