@@ -48,10 +48,8 @@ typedef struct fases{
 
 typedef struct ranking {
     char nome[TAMANHO_NOME];
-    int pontos;
-    int nivel;
-    double tempo;
-    struct ranking *prox;
+    double tempo;             // agora é o ÚNICO critério de rank
+    struct ranking *prox;     // lista ligada
 } ranking;
 
 typedef struct jogo {

@@ -1,4 +1,4 @@
-// main.c (completo e atualizado) - com sistema de tempo integrado (pausa em "iniciar fase", acumula apenas em TELA_FASES)
+// main.c (completo, com tempo acumulativo e ranking TXT top 5)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +8,13 @@
 #include "../includes/inputs.h"
 #include "../includes/fases.h"
 #include "../includes/mapa.h"
+#include "../includes/ranking.h" // assume ranking.h está em includes
 
 #define LARGURA_TELA 756
 #define ALTURA_TELA 817
 #define TOTAL_FASES 4
+#define ARQUIVO_RANKING "ranking.txt"
+#define TOP_N 5
 
 typedef struct {
     Rectangle rect;
@@ -19,16 +22,53 @@ typedef struct {
     bool hovered;
 } Botao;
 
-/* Helper para formatar tempo em MM:SS.mmm */
-static void formatar_tempo(double tempo, char *out, size_t outlen) {
+/* formata tempo float (segundos) para MM:SS.mmm */
+static void formatar_tempo(float tempo, char *out, size_t outlen) {
     if (!out) return;
-    int minutos = (int)(tempo / 60.0);
-    double restante = tempo - (minutos * 60);
+    int minutos = (int)(tempo / 60.0f);
+    float restante = tempo - (minutos * 60);
     int segundos = (int)restante;
-    int miles = (int)((restante - segundos) * 1000.0 + 0.5); // arredonda milissegundos
+    int miles = (int)((restante - segundos) * 1000.0f + 0.5f);
     if (miles >= 1000) { miles = 0; segundos += 1; }
     if (segundos >= 60) { segundos = 0; minutos += 1; }
     snprintf(out, outlen, "%02d:%02d.%03d", minutos, segundos, miles);
+}
+
+/* Mantém somente os TOP_N nós (libera o resto) */
+static void manter_top_n(ranking **head, int n) {
+    if (!head || !*head) return;
+    ranking *atual = *head;
+    int count = 1;
+    while (atual && atual->prox) {
+        if (count == n) {
+            /* libera o resto */
+            ranking *rem = atual->prox;
+            atual->prox = NULL;
+            while (rem) {
+                ranking *nx = rem->prox;
+                free(rem);
+                rem = nx;
+            }
+            return;
+        }
+        atual = atual->prox;
+        count++;
+    }
+}
+
+/* Renderiza o ranking na tela (até TOP_N) */
+static void desenhar_ranking_na_tela(ranking *head) {
+    int y = 140;
+    int i = 1;
+    ranking *it = head;
+    while (it && i <= TOP_N) {
+        char buf[128];
+        formatar_tempo(it->tempo, buf, sizeof(buf));
+        DrawText(TextFormat("%d) %s  -  %s", i, it->nome[0] ? it->nome : "(sem nome)", buf), 120, y, 20, WHITE);
+        it = it->prox;
+        y += 30;
+        i++;
+    }
 }
 
 int main(void) {
@@ -36,12 +76,10 @@ int main(void) {
     SetTargetFPS(60);
 
     // =============================
-    // SISTEMA DE TEMPO (<<< TEMPO)
-    // tempoTotal: acumulado entre todas as fases
-    // tempoRodando: true enquanto estiver em TELA_FASES contando
+    // SISTEMA DE TEMPO
     // =============================
-    double tempoTotal = 0.0;
-    bool tempoRodando = false;
+    float tempoTotal = 0.0f;     // acumulado entre todas as fases
+    bool tempoRodando = false;   // true apenas em TELA_FASES quando contagem ativa
 
     // --- Carrega imagens ---
     Image menuImg = LoadImage("assets/imagens/menu.inicial.png");
@@ -128,6 +166,17 @@ int main(void) {
     int selecionado = 0;
     botoes[0].hovered = true;
 
+    // --- Ranking: carrega do arquivo (lista ligada) ---
+    ranking *rankHead = NULL;
+    carregarRanking(&rankHead, ARQUIVO_RANKING);
+    // garante que só tenha TOP_N logo no início
+    manter_top_n(&rankHead, TOP_N);
+
+    // --- Variáveis para input de nome (TELA_FINAL) ---
+    char nomeInput[TAMANHO_NOME] = {0};
+    int nomeLen = 0;
+    bool finalNomeConfirmado = false;
+
     // =============================
     //        LOOP PRINCIPAL
     // =============================
@@ -167,10 +216,9 @@ int main(void) {
 
                     case 0: // START GAME
                         EscapeRoom.FaseAtual = 0;
-                        // <<< TEMPO: zera o cronômetro quando iniciar um novo jogo
-                        tempoTotal = 0.0;
+                        // zera tempo para novo jogo
+                        tempoTotal = 0.0f;
                         tempoRodando = false;
-                        //
                         telaAtual = TELA_JOGO; // tela "iniciar fase"
                         telaJustChanged = true;
                         break;
@@ -180,7 +228,12 @@ int main(void) {
                         telaJustChanged = true;
                         break;
 
-                    case 2: // RANKING
+                    case 2: // RANKING -> mostra ranking carregado
+                        // (já carregado no início; recarrega para garantir atualidade)
+                        liberarRanking(&rankHead);
+                        rankHead = NULL;
+                        carregarRanking(&rankHead, ARQUIVO_RANKING);
+                        manter_top_n(&rankHead, TOP_N);
                         telaAtual = TELA_RANKING;
                         telaJustChanged = true;
                         break;
@@ -207,9 +260,8 @@ int main(void) {
             }
 
             if (clicou) {
-                // <<< TEMPO: ao começar a fase, ativa a contagem
+                // COMEÇA A CONTAGEM DO TEMPO (retoma)
                 tempoRodando = true;
-                //
                 telaAtual = TELA_FASES;
                 EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.x;
                 EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[EscapeRoom.FaseAtual].posicaoinicial.y;
@@ -241,11 +293,10 @@ int main(void) {
         // ============ FASE ATIVA ============
         if (telaAtual == TELA_FASES) {
 
-            // <<< TEMPO: acumula tempo apenas enquanto estiver em TELA_FASES
+            // acumula tempo apenas enquanto estiver em TELA_FASES
             if (tempoRodando) {
                 tempoTotal += GetFrameTime();
             }
-            // <<< FIM TEMPO
 
             if (EscapeRoom.FaseAtual < TOTAL_FASES) {
                 inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA,
@@ -254,22 +305,70 @@ int main(void) {
                 atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
-                    // <<< TEMPO: ao encostar no portal, pausa o contador (fase concluída)
+                    // pausa o tempo ao tocar no portal
                     tempoRodando = false;
-                    // <<< FIM TEMPO
 
                     EscapeRoom.FaseAtual++;
                     if (EscapeRoom.FaseAtual >= TOTAL_FASES) {
                         EscapeRoom.FaseAtual = TOTAL_FASES;
-                        EscapeRoom.FimDeJogo = TRUE;
-
-                        // opcional: imprimir tempo final no terminal
-                        printf("\nTempo final acumulado: %.3f segundos\n", tempoTotal);
+                        // fim do jogo: vai para TELA_FINAL e pede nome
+                        telaAtual = TELA_FINAL;
+                        telaJustChanged = true;
+                        // prepara input
+                        nomeInput[0] = '\0';
+                        nomeLen = 0;
+                        finalNomeConfirmado = false;
                     } else {
                         telaAtual = TELA_JOGO;
                         telaJustChanged = true;
                     }
                 }
+            }
+        }
+
+        // ============ TELA_FINAL (input nome e salvar) ============
+        if (telaAtual == TELA_FINAL) {
+            // input de texto (GetCharPressed)
+            int key = GetCharPressed();
+            while (key > 0) {
+                if (key >= 32 && key <= 125 && nomeLen < TAMANHO_NOME - 1) {
+                    nomeInput[nomeLen++] = (char)key;
+                    nomeInput[nomeLen] = '\0';
+                }
+                key = GetCharPressed();
+            }
+
+            if (IsKeyPressed(KEY_BACKSPACE) && nomeLen > 0) {
+                nomeLen--;
+                nomeInput[nomeLen] = '\0';
+            }
+
+            if (IsKeyPressed(KEY_ENTER)) {
+                // confirma nome e salva no ranking
+                if (nomeLen == 0) {
+                    // nome vazio -> usa "(anonimo)"
+                    strncpy(nomeInput, "(anonimo)", TAMANHO_NOME - 1);
+                    nomeInput[TAMANHO_NOME - 1] = '\0';
+                    nomeLen = (int)strlen(nomeInput);
+                }
+                // inserir ordenado pelo tempo
+                inserirRanking(&rankHead, nomeInput, tempoTotal);
+                // manter top N
+                manter_top_n(&rankHead, TOP_N);
+                // salvar em arquivo
+                salvarRanking(rankHead, ARQUIVO_RANKING);
+                finalNomeConfirmado = true;
+            }
+
+            // se confirmado, após salvar, mostrar ranking automaticamente
+            if (finalNomeConfirmado) {
+                // recarrega do arquivo para garantir consistência
+                liberarRanking(&rankHead);
+                rankHead = NULL;
+                carregarRanking(&rankHead, ARQUIVO_RANKING);
+                manter_top_n(&rankHead, TOP_N);
+                telaAtual = TELA_RANKING;
+                telaJustChanged = true;
             }
         }
 
@@ -352,9 +451,9 @@ int main(void) {
 
             // -------- RANKING --------
             case TELA_RANKING: {
-                DrawText("RANKING (exemplo)", 220, 80, 36, YELLOW);
-                DrawText("1) JogadorA - 1000", 200, 180, 22, WHITE);
-                DrawText("2) JogadorB - 800", 200, 220, 22, WHITE);
+                ClearBackground(BLACK);
+                DrawText("RANKING - TOP 5", 220, 80, 36, YELLOW);
+                desenhar_ranking_na_tela(rankHead);
                 DrawText("APERTE BACKSPACE PARA VOLTAR", 180, 560, 20, LIGHTGRAY);
             } break;
 
@@ -372,8 +471,7 @@ int main(void) {
 
                     char bufTempo[32];
                     formatar_tempo(tempoTotal, bufTempo, sizeof(bufTempo));
-                    DrawText(TextFormat("Tempo: %s", bufTempo),
-                             10, 70, 20, LIGHTGRAY);
+                    DrawText(TextFormat("Tempo: %s", bufTempo), 10, 70, 20, LIGHTGRAY);
                 } else {
                     // Caso excepcional: índice inválido — mostra mensagem segura ao invés de crashar
                     DrawText("Nenhuma fase ativa (indice invalido)", 80, 200, 20, RED);
@@ -387,7 +485,26 @@ int main(void) {
                 }
             } break;
 
+            // -------- TELA FINAL: pedir nome e salvar --------
+            case TELA_FINAL: {
+                ClearBackground(BLACK);
+                DrawText("PARABENS! VOCE COMPLETOU O JOGO", 160, 160, 24, YELLOW);
+                char bufTempo[32];
+                formatar_tempo(tempoTotal, bufTempo, sizeof(bufTempo));
+                DrawText(TextFormat("SEU TEMPO: %s", bufTempo), 220, 220, 22, GREEN);
+
+                DrawText("DIGITE SEU NOME E APERTE ENTER:", 160, 300, 20, LIGHTGRAY);
+                // caixa simples
+                DrawRectangle(180, 340, 400, 40, DARKGRAY);
+                DrawRectangleLinesEx((Rectangle){180, 340, 400, 40}, 2, WHITE);
+
+                // desenha o texto do nome
+                DrawText(nomeInput, 190, 350, 20, WHITE);
+
+                DrawText("BACKSPACE PARA VOLTAR AO MENU (CANCELA)", 160, 420, 18, LIGHTGRAY);
+            } break;
         }
+
         EndDrawing();
 
         telaJustChanged = false;
@@ -401,6 +518,13 @@ int main(void) {
             UnloadTexture(iniciarTexturas[i]);
         }
     }
+
+    // salvar ranking atual antes de fechar (opcional)
+    if (rankHead) {
+        salvarRanking(rankHead, ARQUIVO_RANKING);
+        liberarRanking(&rankHead);
+    }
+
     acabarFases(EscapeRoom.fases, TOTAL_FASES);
     CloseWindow();
     return 0;
