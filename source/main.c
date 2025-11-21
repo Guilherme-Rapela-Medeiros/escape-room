@@ -1,4 +1,5 @@
 // main.c (completo, com tempo acumulativo e ranking TXT top 5)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -145,7 +146,7 @@ int main(void) {
         EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[0].posicaoinicial.y;
     }
 
-    TelaAtual telaAtual = TELA_MENU;
+    TelaAtual telaAtual = TELA_MENU;   // controla a tela atual (local, passado para funções)
     bool telaJustChanged = false;
 
     // --- Botões do menu ---
@@ -302,7 +303,8 @@ int main(void) {
                 inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA,
                                          5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
 
-                atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
+                // *** CHAMADA CORRIGIDA: passa &telaAtual (variavel local) ***
+                atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador, &telaAtual);
 
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
                     // pausa o tempo ao tocar no portal
@@ -324,6 +326,72 @@ int main(void) {
                     }
                 }
             }
+        }
+
+        // ============ TELA GAME OVER ============
+        if (telaAtual == TELA_GAME_OVER) {
+            // pausa o tempo por segurança
+            tempoRodando = false;
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+
+            DrawText("GAME OVER", 260, 120, 48, RED);
+            DrawText("Voce ficou sem vidas.", 250, 200, 22, LIGHTGRAY);
+
+            // Botões
+            Rectangle btnMenu = { 238, 420, 200, 60 };
+            Rectangle btnRetry = { 338, 420, 200, 60 };
+            Vector2 mouse = GetMousePosition();
+
+            bool hoverMenu = CheckCollisionPointRec(mouse, btnMenu);
+            bool hoverRetry = CheckCollisionPointRec(mouse, btnRetry);
+
+            Color corFundoMenu = hoverMenu ? Fade(SKYBLUE, 0.95f) : Fade(DARKGRAY, 0.8f);
+            Color corFundoRetry = hoverRetry ? Fade(GREEN, 0.95f) : Fade(DARKGREEN, 0.8f);
+
+            DrawRectangleRec(btnMenu, corFundoMenu);
+            DrawRectangleLinesEx(btnMenu, 2, WHITE);
+            DrawText("VOLTAR AO MENU", btnMenu.x + 16, btnMenu.y + 18, 20, BLACK);
+
+            DrawRectangleRec(btnRetry, corFundoRetry);
+            DrawRectangleLinesEx(btnRetry, 2, WHITE);
+            DrawText("JOGAR NOVAMENTE", btnRetry.x + 12, btnRetry.y + 18, 20, BLACK);
+
+            // impede clique instantâneo
+            if (!telaJustChanged) {
+                if ((hoverMenu && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_M)) {
+                    // Voltar ao menu: reset parcial
+                    telaAtual = TELA_MENU;
+                    telaJustChanged = true;
+                    EscapeRoom.FaseAtual = 0;
+                    EscapeRoom.jogador.vida = 3;
+                    tempoTotal = 0.0f;
+                    tempoRodando = false;
+                    if (EscapeRoom.fases != NULL) {
+                        EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[0].posicaoinicial.x;
+                        EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[0].posicaoinicial.y;
+                    }
+                }
+                if ((hoverRetry && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER)) {
+                    // Jogar novamente
+                    EscapeRoom.FaseAtual = 0;
+                    EscapeRoom.jogador.vida = 3;
+                    tempoTotal = 0.0f;
+                    tempoRodando = false;
+                    if (EscapeRoom.fases != NULL) {
+                        EscapeRoom.jogador.hitbox_jogador.x = EscapeRoom.fases[0].posicaoinicial.x;
+                        EscapeRoom.jogador.hitbox_jogador.y = EscapeRoom.fases[0].posicaoinicial.y;
+                    }
+                    telaAtual = TELA_JOGO;
+                    telaJustChanged = true;
+                }
+            }
+
+            EndDrawing();
+            // skip the general drawing below since we already handled this frame
+            telaJustChanged = false;
+            continue;
         }
 
         // ============ TELA_FINAL (input nome e salvar) ============
@@ -373,7 +441,7 @@ int main(void) {
         }
 
         // =============================
-        //          DESENHO
+        //          DESENHO (padrão)
         // =============================
         BeginDrawing();
         ClearBackground(BLACK);

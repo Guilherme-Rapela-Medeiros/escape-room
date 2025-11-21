@@ -15,7 +15,8 @@ typedef enum {
     TELA_FASES,
     TELA_JOGO,
     TELA_RANKING,
-    TELA_FINAL
+    TELA_FINAL,
+    TELA_GAME_OVER,
 } TelaAtual;
 
 typedef struct jogador {
@@ -55,6 +56,7 @@ typedef struct ranking {
 typedef struct jogo {
     jogador jogador;
     int FimDeJogo;
+    int telaAtual;
     int FaseAtual;
     fases fases[4];
     ranking *Head;
