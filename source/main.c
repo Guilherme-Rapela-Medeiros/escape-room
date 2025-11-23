@@ -354,30 +354,56 @@ int main(void) {
             // pausa o tempo por segurança
             tempoRodando = false;
 
-            BeginDrawing();
-            ClearBackground(BLACK);
+            // --- layout configurável ---
+            const char *titulo = "GAME OVER";
+            const int tituloFont = 48;
+            const char *subtitulo = "Voce ficou sem vidas.";
+            const int subtituloFont = 22;
 
-            DrawText("GAME OVER", 260, 120, 48, RED);
-            DrawText("Voce ficou sem vidas.", 250, 200, 22, LIGHTGRAY);
+            // botões: largura, altura e espaçamento
+            int larguraBtn = 200;
+            int alturaBtn = 60;
+            int espacamentoBotoes = 24;
+            int yBotoes = 460; // abaixei um pouco para dar espaço ao subtítulo
 
-            // Botões
-            Rectangle btnMenu = { 238, 420, 200, 60 };
-            Rectangle btnRetry = { 338, 420, 200, 60 };
+            // calcula posição centralizada dos botões (dois botões lado a lado)
+            int totalWidthBtns = larguraBtn * 2 + espacamentoBotoes;
+            int startXBtns = (LARGURA_TELA - totalWidthBtns) / 2;
+
+            Rectangle btnMenu = { (float)startXBtns, (float)yBotoes, (float)larguraBtn, (float)alturaBtn };
+            Rectangle btnRetry = { (float)(startXBtns + larguraBtn + espacamentoBotoes), (float)yBotoes, (float)larguraBtn, (float)alturaBtn };
+
             Vector2 mouse = GetMousePosition();
-
             bool hoverMenu = CheckCollisionPointRec(mouse, btnMenu);
             bool hoverRetry = CheckCollisionPointRec(mouse, btnRetry);
 
+            BeginDrawing();
+            ClearBackground(BLACK);
+
+            // Título centralizado
+            int larguraTitulo = MeasureText(titulo, tituloFont);
+            DrawText(titulo, (LARGURA_TELA - larguraTitulo)/2, 120, tituloFont, RED);
+
+            // Subtítulo centralizado abaixo do título
+            int larguraSub = MeasureText(subtitulo, subtituloFont);
+            DrawText(subtitulo, (LARGURA_TELA - larguraSub)/2, 220, subtituloFont, LIGHTGRAY);
+
+            // Desenhar botões (com hover)
             Color corFundoMenu = hoverMenu ? Fade(SKYBLUE, 0.95f) : Fade(DARKGRAY, 0.8f);
             Color corFundoRetry = hoverRetry ? Fade(GREEN, 0.95f) : Fade(DARKGREEN, 0.8f);
 
             DrawRectangleRec(btnMenu, corFundoMenu);
             DrawRectangleLinesEx(btnMenu, 2, WHITE);
-            DrawText("VOLTAR AO MENU", btnMenu.x + 16, btnMenu.y + 18, 20, BLACK);
+            // texto do botão centralizado dentro dele
+            const char *txtMenu = "VOLTAR AO MENU";
+            int wtxtMenu = MeasureText(txtMenu, 20);
+            DrawText(txtMenu, btnMenu.x + (btnMenu.width - wtxtMenu)/2, btnMenu.y + (btnMenu.height - 20)/2, 20, BLACK);
 
             DrawRectangleRec(btnRetry, corFundoRetry);
             DrawRectangleLinesEx(btnRetry, 2, WHITE);
-            DrawText("JOGAR NOVAMENTE", btnRetry.x + 12, btnRetry.y + 18, 20, BLACK);
+            const char *txtRetry = "JOGAR NOVAMENTE";
+            int wtxtRetry = MeasureText(txtRetry, 20);
+            DrawText(txtRetry, btnRetry.x + (btnRetry.width - wtxtRetry)/2, btnRetry.y + (btnRetry.height - 20)/2, 20, BLACK);
 
             // impede clique instantâneo
             if (!telaJustChanged) {
@@ -410,6 +436,7 @@ int main(void) {
             }
 
             EndDrawing();
+
             // skip the general drawing below since we already handled this frame
             telaJustChanged = false;
             continue;
