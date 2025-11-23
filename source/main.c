@@ -510,8 +510,6 @@ int main(void) {
 
                 int faseMostrada = EscapeRoom.FaseAtual + 1;
 
-                DrawText(TextFormat("FASE %d", faseMostrada), 300, 200, 48, YELLOW);
-
                 // Botão começar
                 Rectangle btn = { 238, 500, 280, 70 };
                 Vector2 mouse = GetMousePosition();
