@@ -1,123 +1,151 @@
 #include <stdlib.h>
-#include "../includes/fases.h"
+#include <math.h>
 #include "raylib.h"
-#include "../includes/structs.h"   // garante acesso ao enum TELA_GAME_OVER
+#include "../includes/structs.h"
+#include "../includes/fases.h"
 
-// Tamanho padrão do jogador
-#define JOGADOR_LARGURA 50
-#define JOGADOR_ALTURA 50
+#define MAX 12
+static Vector2 bases[4][MAX] = {0};
 
-// Função auxiliar: verifica colisão entre dois retângulos
-static bool colidem(Rectangle a, Rectangle b) {
-    return (a.x < b.x + b.width) && (a.x + a.width > b.x) &&
-           (a.y < b.y + b.height) && (a.y + a.height > b.y);
+// Função simples de colisão
+int col(Rectangle a, Rectangle b) {
+    return (a.x < b.x + b.width && a.x + a.width > b.x &&
+            a.y < b.y + b.height && a.y + a.height > b.y);
 }
 
-// Inicializa as fases do jogo
-void comecarfase(fases fasesArray[], int quantidade) {
-    if (!fasesArray) return;
+void comecarfase(fases *f, int qtd) {
+    if (!f) return;
+    int W = GetScreenWidth();
+    int H = GetScreenHeight();
 
-    for (int i = 0; i < quantidade; i++) {
-        fasesArray[i].numero = i + 1;
-        fasesArray[i].quantidadeObstaculos = 2 + i;
-        fasesArray[i].completo = false;
+    for (int p = 0; p < qtd; p++) {
+        f[p].numero = p + 1;
+        f[p].completo = 0;
 
-        fasesArray[i].obstaculos = malloc(sizeof(obstaculo) * fasesArray[i].quantidadeObstaculos);
-        if (!fasesArray[i].obstaculos) continue;
+        // Define quantidade: Fase 4 tem 10, outras aumentam de 2 em 2
+        int n = 4 + p * 2;
+        if (p == 3) n = 10;
+        if (n > MAX) n = MAX;
+        
+        f[p].quantidadeObstaculos = n;
+        f[p].obstaculos = malloc(sizeof(obstaculo) * n);
+        if (!f[p].obstaculos) continue;
 
-        fasesArray[i].posicaoinicial = (Vector2){ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f };
+        f[p].posicaoinicial = (Vector2){80, H / 2.0f};
+        f[p].saida = (portal){{W - 100, H / 2.0f - 50}, {60, 100}, 1};
 
-        for (int j = 0; j < fasesArray[i].quantidadeObstaculos; j++) {
-            obstaculo *o = &fasesArray[i].obstaculos[j];
-            o->tamanho = (Vector2){ 40.0f + 10.0f * j, 40.0f };
-            o->posicao = (Vector2){ 50.0f + 120.0f * j + 20.0f * i, 50.0f + 80.0f * j };
-            o->velocidade = (Vector2){ 1.0f + i * 0.2f + j * 0.1f, 0.0f };
-            o->ativo = TRUE;
+        float start = 250;
+        float gap = (f[p].saida.posicao.x - 60 - start) / n;
+
+        for (int i = 0; i < n; i++) {
+            obstaculo *o = &f[p].obstaculos[i];
+            int tipo = i % 2; // 0 = Flecha, 1 = Fogo
+            
+            // Define tamanho e altura base
+            float by = H * 0.5f;
+            
+            if (tipo == 0) { // Flecha
+                o->tamanho = (Vector2){60, 20};
+                if (i % 3 == 0) by -= 120;
+                if (i % 3 == 2) by += 120;
+            } else { // Fogo
+                o->tamanho = (Vector2){40, 40};
+                if (i % 4 == 1) by -= 70;
+                if (i % 4 == 3) by += 70;
+            }
+
+            bases[p][i] = o->posicao = (Vector2){start + gap * i + gap * 0.5f, by};
+            
+            // Define velocidade/amplitude
+            float amp = 60.0f + p * 15.0f;
+            if (p == 3) amp = 140.0f;
+            
+            o->velocidade = (Vector2){(float)tipo, amp};
+            o->ativo = 1;
         }
-
-        fasesArray[i].saida = (portal){
-            .posicao = { GetScreenWidth() - 80.0f, GetScreenHeight() / 2.0f },
-            .tamanho = { 60.0f, 80.0f },
-            .ativo = TRUE
-        };
     }
 }
 
-// Libera memória das fases
-void acabarFases(fases fasesArray[], int quantidade) {
-    if (!fasesArray) return;
-
-    for (int i = 0; i < quantidade; i++) {
-        free(fasesArray[i].obstaculos);
-        fasesArray[i].obstaculos = NULL;
-        fasesArray[i].quantidadeObstaculos = 0;
-    }
+void acabarFases(fases *f, int qtd) {
+    if (f) for (int i = 0; i < qtd; i++) { free(f[i].obstaculos); }
 }
 
-// Atualiza lógica da fase, colisões e game over
-void atualizarFases(fases *fase, jogador *jogador, TelaAtual *telaAtual) {
-    if (!fase || !jogador || !telaAtual) return;
+void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
+    if (!f || !j) return;
+    
+    // Trava jogador no limite do portal
+    if (j->hitbox_jogador.x > f->saida.posicao.x) j->hitbox_jogador.x = f->saida.posicao.x;
+    
+    if (j->vida <= 0) { *tela = TELA_GAME_OVER; return; }
 
-    // Se a vida chegar a zero → muda a tela
-    if (jogador->vida <= 0) {
-        *telaAtual = TELA_GAME_OVER;
-        return;
-    }
+    int idx = (f->numero > 0) ? f->numero - 1 : 0;
+    
+    // Velocidade: Fase 4 é fixa em 1.4, outras aumentam aos poucos
+    float freq = 1.0f + idx * 0.15f;
+    if (idx == 3) freq = 1.4f;
 
-    Rectangle rJogador = jogador->hitbox_jogador;
+    float t = GetTime();
 
-    for (int i = 0; i < fase->quantidadeObstaculos; i++) {
-        obstaculo *o = &fase->obstaculos[i];
+    for (int i = 0; i < f->quantidadeObstaculos; i++) {
+        obstaculo *o = &f->obstaculos[i];
         if (!o->ativo) continue;
 
-        o->posicao.x += o->velocidade.x;
-        o->posicao.y += o->velocidade.y;
+        float osc = sinf(t * freq + i) * o->velocidade.y;
+        Vector2 np = bases[idx][i];
 
-        if (o->posicao.x < 0 || o->posicao.x + o->tamanho.x > GetScreenWidth())
-            o->velocidade.x *= -1;
-        if (o->posicao.y < 0 || o->posicao.y + o->tamanho.y > GetScreenHeight())
-            o->velocidade.y *= -1;
+        if (o->velocidade.x == 0) np.x += osc; // Flecha mexe no X
+        else np.y += osc;                      // Fogo mexe no Y
 
-        Rectangle rObst = { o->posicao.x, o->posicao.y, o->tamanho.x, o->tamanho.y };
+        // Limites
+        if (np.x < 150) np.x = 150;
+        if (np.x + o->tamanho.x > f->saida.posicao.x - 10) np.x = f->saida.posicao.x - 10 - o->tamanho.x;
+        
+        if (np.y < 30) np.y = 30;
+        if (np.y + o->tamanho.y > GetScreenHeight() - 20) np.y = GetScreenHeight() - 20 - o->tamanho.y;
 
-        if (colidem(rJogador, rObst)) {
-            jogador->vida -= 1;
-            o->ativo = FALSE;
-
-            if (jogador->vida <= 0) {
-                *telaAtual = TELA_GAME_OVER;
-                return;
-            }
+        o->posicao = np;
+        
+        // Colisão Player
+        if (col(j->hitbox_jogador, (Rectangle){np.x, np.y, o->tamanho.x, o->tamanho.y})) {
+            j->vida--;
+            o->ativo = 0;
+            if (j->vida <= 0) *tela = TELA_GAME_OVER;
         }
     }
 
-    portal *p = &fase->saida;
-    Rectangle rPortal = { p->posicao.x, p->posicao.y, p->tamanho.x, p->tamanho.y };
-
-    if (p->ativo && colidem(rJogador, rPortal)) {
-        fase->completo = TRUE;
-        p->ativo = FALSE;
+    // Colisão Portal
+    if (f->saida.ativo && col(j->hitbox_jogador, (Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100})) {
+        f->completo = 1;
+        f->saida.ativo = 0;
     }
 }
 
-// Desenha a fase
-void desenharFase(fases *fase, jogador *jogador) {
-    if (!fase || !jogador) return;
+void desenharFase(fases *f, jogador *j) {
+    if (!f || !j) return;
 
-    for (int i = 0; i < fase->quantidadeObstaculos; i++) {
-        obstaculo *o = &fase->obstaculos[i];
-        if (o->ativo)
-            DrawRectangleV(o->posicao, o->tamanho, RED);
+    if (f->saida.ativo) {
+        DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, BLUE);
+        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, DARKBLUE);
     }
 
-    if (fase->saida.ativo)
-        DrawRectangleV(fase->saida.posicao, fase->saida.tamanho, BLUE);
+    for (int i = 0; i < f->quantidadeObstaculos; i++) {
+        obstaculo *o = &f->obstaculos[i];
+        if (!o->ativo) continue;
 
-    DrawRectangle((int)jogador->hitbox_jogador.x,
-                  (int)jogador->hitbox_jogador.y,
-                  (int)jogador->hitbox_jogador.width,
-                  (int)jogador->hitbox_jogador.height,
-                  GREEN);
+        if (o->velocidade.x == 0) { // Desenha Flecha
+            DrawRectangle(o->posicao.x, o->posicao.y + 5, o->tamanho.x - 15, o->tamanho.y - 10, ORANGE);
+            Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y / 2};
+            Vector2 p2 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y + o->tamanho.y};
+            Vector2 p3 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y};
+            DrawTriangle(p1, p2, p3, ORANGE);
+        } else { // Desenha Fogo
+            Vector2 c = {o->posicao.x + o->tamanho.x / 2, o->posicao.y + o->tamanho.y / 2};
+            DrawCircleV(c, o->tamanho.x / 2, RED);
+            DrawCircleLines(c.x, c.y, o->tamanho.x / 2, YELLOW);
+        }
+    }
 
-    DrawText(TextFormat("Vida: %d", jogador->vida), 10, 40, 20, BLACK);
+    DrawRectangleRec(j->hitbox_jogador, GREEN);
+    DrawRectangleLinesEx(j->hitbox_jogador, 2, DARKGREEN);
+    DrawText(TextFormat("Vida: %d", j->vida), 10, 40, 20, BLACK);
 }
