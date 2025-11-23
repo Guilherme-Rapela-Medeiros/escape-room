@@ -138,6 +138,27 @@ int main(void) {
         LARGURA_TELA / 2.0f - 25, ALTURA_TELA / 2.0f - 25, 50, 50
     };
 
+    // ---------------------------------------
+    // CARREGAR SPRITES DO JOGADOR
+    // ---------------------------------------
+    // Carregar sprites do jogador na ordem correta do enum
+    EscapeRoom.jogador.sprites[SPRITE_PARADO]   = LoadTexture("assets/player/jogador_sprite_parado.png");
+    EscapeRoom.jogador.sprites[SPRITE_ESQUERDA] = LoadTexture("assets/player/jogador_sprite_esquerda.png");
+    EscapeRoom.jogador.sprites[SPRITE_DIREITA]  = LoadTexture("assets/player/jogador_sprite_direita.png");
+    EscapeRoom.jogador.sprites[SPRITE_CIMA]     = LoadTexture("assets/player/jogador_sprite_cima.png");
+    EscapeRoom.jogador.sprites[SPRITE_BAIXO]    = LoadTexture("assets/player/jogador_sprite_baixo.png");
+
+    // Define direção inicial parado
+    EscapeRoom.jogador.sprite_atual = SPRITE_PARADO;
+
+    // Checar se algum arquivo não carregou
+    for (int i = 0; i < 5; i++) {
+        if (EscapeRoom.jogador.sprites[i].id == 0) {
+            printf("ERRO: textura do jogador %d nao carregou!\n", i);
+        }
+    }
+
+
     // inicializa fases
     comecarfase(EscapeRoom.fases, TOTAL_FASES);
 
@@ -531,6 +552,15 @@ int main(void) {
                 if (EscapeRoom.FaseAtual >= 0 && EscapeRoom.FaseAtual < TOTAL_FASES) {
                     desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
 
+                    // Desenhar sprite do jogador (dependendo da direção)
+                    DrawTexture(
+                        EscapeRoom.jogador.sprites[EscapeRoom.jogador.sprite_atual],
+                        EscapeRoom.jogador.hitbox_jogador.x,
+                        EscapeRoom.jogador.hitbox_jogador.y,
+                        WHITE
+                    );
+
+
                     // HUD no canto superior esquerdo: Fase, Vida, Tempo formatado MM:SS.mmm
                     DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1),
                              10, 10, 20, LIGHTGRAY);
@@ -591,6 +621,12 @@ int main(void) {
     if (rankHead) {
         salvarRanking(rankHead, ARQUIVO_RANKING);
         liberarRanking(&rankHead);
+    }
+
+    // Unload sprites do jogador
+    for (int i = 0; i < 5; i++){
+    if (EscapeRoom.jogador.sprites[i].id != 0)
+        UnloadTexture(EscapeRoom.jogador.sprites[i]);
     }
 
     acabarFases(EscapeRoom.fases, TOTAL_FASES);

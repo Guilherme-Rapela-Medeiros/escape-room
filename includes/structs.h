@@ -19,10 +19,21 @@ typedef enum {
     TELA_GAME_OVER,
 } TelaAtual;
 
+typedef enum {
+    SPRITE_PARADO = 0,
+    SPRITE_ESQUERDA,
+    SPRITE_DIREITA,
+    SPRITE_CIMA,
+    SPRITE_BAIXO,
+    SPRITE_TOTAL
+} PlayerSpriteID;
+
 typedef struct jogador {
     Rectangle hitbox_jogador;
     int vida;
     char nome[TAMANHO_NOME];
+    Texture2D sprites[SPRITE_TOTAL];
+    PlayerSpriteID sprite_atual;
 } jogador;
 
 typedef struct obstaculo{
