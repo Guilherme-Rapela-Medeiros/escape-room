@@ -120,43 +120,86 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
     }
 }
 
+// source/fases.c (apenas a função desenharFase)
+
+// source/fases.c (apenas a função desenharFase)
+
 void desenharFase(fases *f, jogador *j) {
     if (!f || !j) return;
 
-    // --- DESENHO PORTAL MELHORADO ---
+    // 1. DESENHA O PORTAL
     if (f->saida.ativo) {
         DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
-        DrawRectangle(f->saida.posicao.x + 5, f->saida.posicao.y + 5, 50, 90, BLUE); 
-        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE); 
+        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE);
     }
 
+    // 2. DESENHA OS OBSTÁCULOS
     for (int i = 0; i < f->quantidadeObstaculos; i++) {
         obstaculo *o = &f->obstaculos[i];
         if (!o->ativo) continue;
 
-        if (o->velocidade.x == 0) { 
-            // === FLECHA REALISTA ===
-            // 1. Cabo (Marrom)
+        if (o->velocidade.x == 0) { // Flecha
             DrawRectangle(o->posicao.x, o->posicao.y + 8, o->tamanho.x - 15, 4, BROWN);
-            // 2. Penas (Vermelho)
             DrawRectangle(o->posicao.x, o->posicao.y + 6, 10, 8, RED);
-            // 3. Ponta (Cinza Claro)
-            Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y / 2};
+            Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y/2};
             Vector2 p2 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y + o->tamanho.y};
             Vector2 p3 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y};
             DrawTriangle(p1, p2, p3, LIGHTGRAY);
-        } else { 
-            // === FOGO EM CAMADAS ===
-            Vector2 c = {o->posicao.x + o->tamanho.x / 2, o->posicao.y + o->tamanho.y / 2};
-            float r = o->tamanho.x / 2;
-            DrawCircleV(c, r, RED);           // Base Quente
-            DrawCircleV(c, r * 0.7f, ORANGE); // Meio
-            DrawCircleV(c, r * 0.4f, YELLOW); // Miolo
-            DrawCircleV(c, r * 0.2f, WHITE);  // Centro
+        } else { // Fogo
+            Vector2 c = {o->posicao.x + o->tamanho.x/2, o->posicao.y + o->tamanho.y/2};
+            DrawCircleV(c, o->tamanho.x/2, RED);
+            DrawCircleV(c, o->tamanho.x/2, ORANGE); // Efeito simples
         }
     }
 
-    DrawRectangleRec(j->hitbox_jogador, GREEN);
-    DrawRectangleLinesEx(j->hitbox_jogador, 2, DARKGREEN);
+    // 3. DESENHO DO JOGADOR INDEPENDENTE (SEM CAIXA VERDE)
+    
+    // Pegamos a posição X e Y da "alma" (hitbox) para saber onde desenhar
+    float x = j->hitbox_jogador.x;
+    float y = j->hitbox_jogador.y;
+    float w = j->hitbox_jogador.width;
+    float h = j->hitbox_jogador.height;
+
+    // O "Pivô" do boneco é o centro da base (nos pés)
+    Vector2 pe = { x + w/2, y + h }; 
+
+    // Cores
+    Color pele = BEIGE;
+    Color roupa = BLUE;
+
+    // Detecta direção (Gambiarra visual baseada no input)
+    int viradoDireita = (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) ? 1 : 0;
+    if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1; // Padrão direita
+
+    // --- AQUI A MÁGICA: O DESENHO NÃO RESPEITA O QUADRADO ---
+    
+    // Cabeça (Flutuando acima da hitbox)
+    DrawCircle(pe.x, pe.y - 45, 10, pele);
+
+    // Corpo (Tronco)
+    DrawRectangle(pe.x - 8, pe.y - 35, 16, 20, roupa);
+
+    // Pernas (Simulando movimento se estiver andando)
+    // Se a posição X mudar (estiver andando), as pernas balançam
+    float balanco = sinf(GetTime() * 10.0f) * 5.0f;
+    if (!IsKeyDown(KEY_RIGHT) && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D)) balanco = 0;
+
+    // Perna Esquerda
+    DrawLineEx((Vector2){pe.x - 4, pe.y - 15}, (Vector2){pe.x - 4 + balanco, pe.y}, 4, DARKBLUE);
+    // Perna Direita
+    DrawLineEx((Vector2){pe.x + 4, pe.y - 15}, (Vector2){pe.x + 4 - balanco, pe.y}, 4, DARKBLUE);
+
+    // Braços
+    if (viradoDireita) {
+        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); // Aponta pra frente
+    } else {
+        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); // Aponta pra tras
+    }
+
+    // --- FIM DO DESENHO ---
+    
+    // NOTA IMPORTANTE: Eu REMOVI a linha "DrawRectangleRec(..., GREEN)".
+    // O quadrado verde SUMIU. Agora só existe a matemática invisível dele.
+
     DrawText(TextFormat("Vida: %d", j->vida), 10, 40, 20, BLACK);
 }
