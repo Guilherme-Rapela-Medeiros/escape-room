@@ -123,25 +123,36 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
 void desenharFase(fases *f, jogador *j) {
     if (!f || !j) return;
 
+    // --- DESENHO PORTAL MELHORADO ---
     if (f->saida.ativo) {
-        DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, BLUE);
-        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, DARKBLUE);
+        DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
+        DrawRectangle(f->saida.posicao.x + 5, f->saida.posicao.y + 5, 50, 90, BLUE); 
+        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE); 
     }
 
     for (int i = 0; i < f->quantidadeObstaculos; i++) {
         obstaculo *o = &f->obstaculos[i];
         if (!o->ativo) continue;
 
-        if (o->velocidade.x == 0) { // Desenha Flecha
-            DrawRectangle(o->posicao.x, o->posicao.y + 5, o->tamanho.x - 15, o->tamanho.y - 10, ORANGE);
+        if (o->velocidade.x == 0) { 
+            // === FLECHA REALISTA ===
+            // 1. Cabo (Marrom)
+            DrawRectangle(o->posicao.x, o->posicao.y + 8, o->tamanho.x - 15, 4, BROWN);
+            // 2. Penas (Vermelho)
+            DrawRectangle(o->posicao.x, o->posicao.y + 6, 10, 8, RED);
+            // 3. Ponta (Cinza Claro)
             Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y / 2};
             Vector2 p2 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y + o->tamanho.y};
             Vector2 p3 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y};
-            DrawTriangle(p1, p2, p3, ORANGE);
-        } else { // Desenha Fogo
+            DrawTriangle(p1, p2, p3, LIGHTGRAY);
+        } else { 
+            // === FOGO EM CAMADAS ===
             Vector2 c = {o->posicao.x + o->tamanho.x / 2, o->posicao.y + o->tamanho.y / 2};
-            DrawCircleV(c, o->tamanho.x / 2, RED);
-            DrawCircleLines(c.x, c.y, o->tamanho.x / 2, YELLOW);
+            float r = o->tamanho.x / 2;
+            DrawCircleV(c, r, RED);           // Base Quente
+            DrawCircleV(c, r * 0.7f, ORANGE); // Meio
+            DrawCircleV(c, r * 0.4f, YELLOW); // Miolo
+            DrawCircleV(c, r * 0.2f, WHITE);  // Centro
         }
     }
 

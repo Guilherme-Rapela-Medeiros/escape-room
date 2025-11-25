@@ -32,6 +32,7 @@ typedef struct jogador {
     Rectangle hitbox_jogador;
     int vida;
     char nome[TAMANHO_NOME];
+    float velocidade_vertical;
     Texture2D sprites[SPRITE_TOTAL];
     PlayerSpriteID sprite_atual;
 } jogador;
