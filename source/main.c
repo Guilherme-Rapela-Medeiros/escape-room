@@ -127,9 +127,36 @@ int main(void) {
     }
 
     // =============================
-    // INICIALIZAÇÃO DO JOGO
+    // 4. Mapas das fases
     // =============================
     jogo EscapeRoom;
+
+
+    const char* pathsMapas[4] = {
+        "assets/imagens/mapas/mapa_fase1.png",
+        "assets/imagens/mapas/mapa_fase2.png",
+        "assets/imagens/mapas/mapa_fase3.png",
+        "assets/imagens/mapas/mapa_fase4.png"
+    };
+
+    for (int i = 0; i < 4; i++) {
+        Image tempMapa = LoadImage(pathsMapas[i]);
+        EscapeRoom.mapas[i] = (tempMapa.data != NULL)
+            ? LoadTextureFromImage(tempMapa)
+            : (Texture2D){0};
+
+        if (tempMapa.data != NULL)
+            UnloadImage(tempMapa);
+
+        if (EscapeRoom.mapas[i].id == 0) {
+            printf("ERRO: mapa %d nao carregou!\n", i + 1);
+        }
+    }
+
+
+    // =============================
+    // INICIALIZAÇÃO DO JOGO
+    // =============================
     EscapeRoom.FimDeJogo = FALSE;
     EscapeRoom.FaseAtual = 0;
 
@@ -462,6 +489,13 @@ int main(void) {
 
             case TELA_FASES:
                 if (EscapeRoom.FaseAtual < TOTAL_FASES) {
+                    // Desenhar o mapa da fase atual
+                    Texture2D mapaAtual = EscapeRoom.mapas[EscapeRoom.FaseAtual];
+
+                    if (mapaAtual.id != 0) {
+                        DrawTexture(mapaAtual, 0, 0, WHITE);
+                    }
+
                     desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
                     
                     // --- MUDANÇA AQUI: Lógica de Fallback para o Jogador ---
@@ -539,6 +573,13 @@ int main(void) {
     for (int i = 0; i < 4; i++) {
         if (iniciarTexturas[i].id != 0) UnloadTexture(iniciarTexturas[i]);
     }
+
+    for (int i = 0; i < 4; i++) {
+        if (EscapeRoom.mapas[i].id != 0) {
+            UnloadTexture(EscapeRoom.mapas[i]);
+        }
+    }
+
 
     for (int i = 0; i < 5; i++) {
         if (EscapeRoom.jogador.sprites[i].id != 0) UnloadTexture(EscapeRoom.jogador.sprites[i]);

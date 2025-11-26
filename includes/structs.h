@@ -72,6 +72,7 @@ typedef struct jogo {
     int telaAtual;
     int FaseAtual;
     fases fases[4];
+    Texture2D mapas[4]; //array de texturas dos mapas
     ranking *Head;
 } jogo;
 
