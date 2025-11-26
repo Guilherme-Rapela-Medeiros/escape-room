@@ -18,7 +18,7 @@
 
 ### Obstáculos: *Objetos como bola de fogo que surgem no caminho. Caso o jogador encoste neles, perde -1 de vida ❤️ até ficar sem nenhuma e perder tudo*. 
 
-# Fim De Jogo 
+# Fim Do Jogo 
 
 ### *O jogo termina quando o jogador é atingido pelo obstáculo até zerar a sua vida, ou ao concluir todas as fases disponíveis.*
 
