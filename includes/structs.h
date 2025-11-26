@@ -67,6 +67,8 @@ typedef struct portal{
     Vector2 posicao;
     Vector2 tamanho;
     int ativo;
+    // 🔑 CAMPO ADICIONADO: Para a textura do PNG
+    Texture2D textura; 
 } portal;
 
 typedef struct fases{

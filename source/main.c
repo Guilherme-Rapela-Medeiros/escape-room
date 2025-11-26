@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include "../includes/structs.h"
 #include "../includes/inputs.h"
-#include "../includes/fases.h" // Necessário para desenharJogadorManual
+#include "../includes/fases.h" 
 #include "../includes/mapa.h"
 #include "../includes/ranking.h" 
 
@@ -183,9 +183,7 @@ int main(void) {
             EscapeRoom.jogador.sprites[i] = LoadTextureFromImage(pImg);
             UnloadImage(pImg);
         } else {
-            // *** MUDANÇA AQUI ***
             // Se falhar, DEIXAMOS a textura com id=0 (seu valor inicial)
-            // Isso permite que a lógica de desenho use o fallback manual.
             printf("AVISO: Falha ao carregar sprite do jogador: %s. Usando fallback manual.\n", playerPaths[i]);
             EscapeRoom.jogador.sprites[i] = (Texture2D){0}; // Garante id=0 se o LoadImage falhar
         }
@@ -193,7 +191,7 @@ int main(void) {
     
     EscapeRoom.jogador.sprite_atual = SPRITE_PARADO;
 
-    // Inicializa estrutura das fases
+    // Inicializa estrutura das fases (Aqui o portal é carregado)
     comecarfase(EscapeRoom.fases, TOTAL_FASES);
 
     // Posiciona jogador na primeira fase
@@ -234,7 +232,7 @@ int main(void) {
     bool finalNomeConfirmado = false;
 
     // =============================
-    //        LOOP PRINCIPAL
+    //        LOOP PRINCIPAL
     // =============================
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
 
@@ -430,7 +428,7 @@ int main(void) {
         }
 
         // =============================
-        //          DESENHO
+        //          DESENHO
         // =============================
         BeginDrawing();
         ClearBackground(BLACK);
@@ -448,9 +446,9 @@ int main(void) {
                     int fs = 20;
                     int tw = MeasureText(botoes[i].texto, fs);
                     DrawText(botoes[i].texto, 
-                             botoes[i].rect.x + (botoes[i].rect.width - tw)/2, 
-                             botoes[i].rect.y + (botoes[i].rect.height - fs)/2 - 2, 
-                             fs, BLACK);
+                              botoes[i].rect.x + (botoes[i].rect.width - tw)/2, 
+                              botoes[i].rect.y + (botoes[i].rect.height - fs)/2 - 2, 
+                              fs, BLACK);
                 }
                 DrawText("Use SETAS e ENTER para navegar", 60, ALTURA_TELA - 50, 14, LIGHTGRAY);
                 break;
@@ -498,7 +496,7 @@ int main(void) {
 
                     desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
                     
-                    // --- MUDANÇA AQUI: Lógica de Fallback para o Jogador ---
+                    // --- Lógica de Fallback para o Jogador ---
                     Texture2D spriteAtual = EscapeRoom.jogador.sprites[EscapeRoom.jogador.sprite_atual];
                     
                     if (spriteAtual.id != 0) {
@@ -565,8 +563,13 @@ int main(void) {
     }
 
     // =============================
-    // LIMPEZA DE MEMÓRIA
+    // LIMPEZA DE MEMÓRIA (Corrigida e Reorganizada)
     // =============================
+    
+    // 🔑 1. LIMPEZA DOS RECURSOS DA FASE (portal, obstáculos, plataformas)
+    acabarFases(EscapeRoom.fases, TOTAL_FASES);
+    
+    // 2. Limpeza das Texturas da Tela
     if (menuTextura.id != 0) UnloadTexture(menuTextura);
     if (tutorialTextura.id != 0) UnloadTexture(tutorialTextura);
     
@@ -574,23 +577,24 @@ int main(void) {
         if (iniciarTexturas[i].id != 0) UnloadTexture(iniciarTexturas[i]);
     }
 
+    // 3. Limpeza dos Mapas da Fase
     for (int i = 0; i < 4; i++) {
         if (EscapeRoom.mapas[i].id != 0) {
             UnloadTexture(EscapeRoom.mapas[i]);
         }
     }
 
-
+    // 4. Limpeza dos Sprites do Jogador
     for (int i = 0; i < 5; i++) {
         if (EscapeRoom.jogador.sprites[i].id != 0) UnloadTexture(EscapeRoom.jogador.sprites[i]);
     }
 
+    // 5. Limpeza do Ranking (salva e libera a lista encadeada)
     if (rankHead) {
         salvarRanking(rankHead, ARQUIVO_RANKING);
         liberarRanking(&rankHead);
     }
 
-    acabarFases(EscapeRoom.fases, TOTAL_FASES);
     CloseWindow();
     return 0;
 }
