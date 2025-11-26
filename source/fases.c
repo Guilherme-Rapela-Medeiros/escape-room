@@ -5,13 +5,64 @@
 #include "../includes/fases.h"
 
 #define MAX 12
+// Bases estáticas para o movimento dos obstáculos
 static Vector2 bases[4][MAX] = {0};
+
+/* --- Funções Auxiliares --- */
 
 // Função simples de colisão
 int col(Rectangle a, Rectangle b) {
     return (a.x < b.x + b.width && a.x + a.width > b.x &&
             a.y < b.y + b.height && a.y + a.height > b.y);
 }
+
+// NOVO: Desenha o boneco do jogador manualmente (fallback)
+void desenharJogadorManual(jogador *j) {
+    if (!j) return;
+    
+    // Pegamos a posição X e Y da "alma" (hitbox) para saber onde desenhar
+    float x = j->hitbox_jogador.x;
+    float y = j->hitbox_jogador.y;
+    float w = j->hitbox_jogador.width;
+    float h = j->hitbox_jogador.height;
+
+    // O "Pivô" do boneco é o centro da base (nos pés)
+    Vector2 pe = { x + w/2, y + h }; 
+
+    // Cores
+    Color pele = BEIGE;
+    Color roupa = BLUE;
+
+    // Detecta direção (Gambiarra visual baseada no input)
+    int viradoDireita = (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) ? 1 : 0;
+    if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1; // Padrão direita
+
+    // --- DESENHO DO BONECO ---
+    
+    // Cabeça (Flutuando acima da hitbox)
+    DrawCircle(pe.x, pe.y - 45, 10, pele);
+
+    // Corpo (Tronco)
+    DrawRectangle(pe.x - 8, pe.y - 35, 16, 20, roupa);
+
+    // Pernas (Simulando movimento se estiver andando)
+    float balanco = sinf(GetTime() * 10.0f) * 5.0f;
+    if (!IsKeyDown(KEY_RIGHT) && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D)) balanco = 0;
+
+    // Perna Esquerda
+    DrawLineEx((Vector2){pe.x - 4, pe.y - 15}, (Vector2){pe.x - 4 + balanco, pe.y}, 4, DARKBLUE);
+    // Perna Direita
+    DrawLineEx((Vector2){pe.x + 4, pe.y - 15}, (Vector2){pe.x + 4 - balanco, pe.y}, 4, DARKBLUE);
+
+    // Braços
+    if (viradoDireita) {
+        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); // Aponta pra frente
+    } else {
+        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); // Aponta pra tras
+    }
+}
+
+/* --- Funções de Inicialização e Limpeza --- */
 
 void comecarfase(fases *f, int qtd) {
     if (!f) return;
@@ -70,6 +121,8 @@ void acabarFases(fases *f, int qtd) {
     if (f) for (int i = 0; i < qtd; i++) { free(f[i].obstaculos); }
 }
 
+/* --- Funções de Jogo (Update e Draw) --- */
+
 void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
     if (!f || !j) return;
     
@@ -94,7 +147,7 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
         Vector2 np = bases[idx][i];
 
         if (o->velocidade.x == 0) np.x += osc; // Flecha mexe no X
-        else np.y += osc;                      // Fogo mexe no Y
+        else np.y += osc;                    // Fogo mexe no Y <--- CORRIGIDO: SEM CARACTERES INVISÍVEIS
 
         // Limites
         if (np.x < 150) np.x = 150;
@@ -119,10 +172,6 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
         f->saida.ativo = 0;
     }
 }
-
-// source/fases.c (apenas a função desenharFase)
-
-// source/fases.c (apenas a função desenharFase)
 
 void desenharFase(fases *f, jogador *j) {
     if (!f || !j) return;
@@ -152,54 +201,7 @@ void desenharFase(fases *f, jogador *j) {
         }
     }
 
-    // 3. DESENHO DO JOGADOR INDEPENDENTE (SEM CAIXA VERDE)
-    
-    // Pegamos a posição X e Y da "alma" (hitbox) para saber onde desenhar
-    float x = j->hitbox_jogador.x;
-    float y = j->hitbox_jogador.y;
-    float w = j->hitbox_jogador.width;
-    float h = j->hitbox_jogador.height;
-
-    // O "Pivô" do boneco é o centro da base (nos pés)
-    Vector2 pe = { x + w/2, y + h }; 
-
-    // Cores
-    Color pele = BEIGE;
-    Color roupa = BLUE;
-
-    // Detecta direção (Gambiarra visual baseada no input)
-    int viradoDireita = (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) ? 1 : 0;
-    if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1; // Padrão direita
-
-    // --- AQUI A MÁGICA: O DESENHO NÃO RESPEITA O QUADRADO ---
-    
-    // Cabeça (Flutuando acima da hitbox)
-    DrawCircle(pe.x, pe.y - 45, 10, pele);
-
-    // Corpo (Tronco)
-    DrawRectangle(pe.x - 8, pe.y - 35, 16, 20, roupa);
-
-    // Pernas (Simulando movimento se estiver andando)
-    // Se a posição X mudar (estiver andando), as pernas balançam
-    float balanco = sinf(GetTime() * 10.0f) * 5.0f;
-    if (!IsKeyDown(KEY_RIGHT) && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D)) balanco = 0;
-
-    // Perna Esquerda
-    DrawLineEx((Vector2){pe.x - 4, pe.y - 15}, (Vector2){pe.x - 4 + balanco, pe.y}, 4, DARKBLUE);
-    // Perna Direita
-    DrawLineEx((Vector2){pe.x + 4, pe.y - 15}, (Vector2){pe.x + 4 - balanco, pe.y}, 4, DARKBLUE);
-
-    // Braços
-    if (viradoDireita) {
-        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); // Aponta pra frente
-    } else {
-        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); // Aponta pra tras
-    }
-
-    // --- FIM DO DESENHO ---
-    
-    // NOTA IMPORTANTE: Eu REMOVI a linha "DrawRectangleRec(..., GREEN)".
-    // O quadrado verde SUMIU. Agora só existe a matemática invisível dele.
-
-    DrawText(TextFormat("Vida: %d", j->vida), 10, 40, 20, BLACK);
+    // *** REMOVIDO: O CÓDIGO MANUAL DE DESENHO DO JOGADOR FOI MOVIDO PARA desenharJogadorManual() ***
+    // Isso garante que o jogador será desenhado APENAS no main.c, eliminando o erro de duplicação.
+    // O HUD de vida TAMBÉM NÃO DEVE ESTAR AQUI! Deve estar no main.c
 }

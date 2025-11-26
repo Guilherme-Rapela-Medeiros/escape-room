@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include "../includes/structs.h"
 #include "../includes/inputs.h"
-#include "../includes/fases.h"
+#include "../includes/fases.h" // Necessário para desenharJogadorManual
 #include "../includes/mapa.h"
 #include "../includes/ranking.h" 
 
@@ -156,11 +156,11 @@ int main(void) {
             EscapeRoom.jogador.sprites[i] = LoadTextureFromImage(pImg);
             UnloadImage(pImg);
         } else {
-            // Se falhar, cria um quadrado magenta para debug (não crasha o jogo)
-            printf("ERRO GRAVE: Falha ao carregar sprite do jogador: %s\n", playerPaths[i]);
-            Image fallback = GenImageColor(50, 50, MAGENTA);
-            EscapeRoom.jogador.sprites[i] = LoadTextureFromImage(fallback);
-            UnloadImage(fallback);
+            // *** MUDANÇA AQUI ***
+            // Se falhar, DEIXAMOS a textura com id=0 (seu valor inicial)
+            // Isso permite que a lógica de desenho use o fallback manual.
+            printf("AVISO: Falha ao carregar sprite do jogador: %s. Usando fallback manual.\n", playerPaths[i]);
+            EscapeRoom.jogador.sprites[i] = (Texture2D){0}; // Garante id=0 se o LoadImage falhar
         }
     }
     
@@ -207,7 +207,7 @@ int main(void) {
     bool finalNomeConfirmado = false;
 
     // =============================
-    //        LOOP PRINCIPAL
+    //        LOOP PRINCIPAL
     // =============================
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
 
@@ -403,7 +403,7 @@ int main(void) {
         }
 
         // =============================
-        //          DESENHO
+        //          DESENHO
         // =============================
         BeginDrawing();
         ClearBackground(BLACK);
@@ -464,15 +464,22 @@ int main(void) {
                 if (EscapeRoom.FaseAtual < TOTAL_FASES) {
                     desenharFase(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador);
                     
-                    // Desenha o Jogador (Sprite)
-                    // Nota: O sprite é desenhado na posição da hitbox. 
-                    // Se o sprite for maior que a hitbox (50x50), pode precisar ajustar X/Y aqui.
-                    DrawTexture(
-                        EscapeRoom.jogador.sprites[EscapeRoom.jogador.sprite_atual],
-                        (int)EscapeRoom.jogador.hitbox_jogador.x,
-                        (int)EscapeRoom.jogador.hitbox_jogador.y,
-                        WHITE
-                    );
+                    // --- MUDANÇA AQUI: Lógica de Fallback para o Jogador ---
+                    Texture2D spriteAtual = EscapeRoom.jogador.sprites[EscapeRoom.jogador.sprite_atual];
+                    
+                    if (spriteAtual.id != 0) {
+                        // 1. Desenha o Sprite PNG (se carregou corretamente)
+                        DrawTexture(
+                            spriteAtual,
+                            (int)EscapeRoom.jogador.hitbox_jogador.x,
+                            (int)EscapeRoom.jogador.hitbox_jogador.y,
+                            WHITE
+                        );
+                    } else {
+                        // 2. Desenha o Boneco Manual (fallback se o PNG falhou)
+                        desenharJogadorManual(&EscapeRoom.jogador);
+                    }
+                    // --------------------------------------------------------
 
                     // HUD
                     DrawText(TextFormat("Fase: %d", EscapeRoom.FaseAtual + 1), 10, 10, 20, LIGHTGRAY);

@@ -1,16 +1,17 @@
 #ifndef FASES_H
 #define FASES_H
 
-#include "structs.h"
+#include "structs.h" // Garante que 'fases' e 'jogador' estão definidos
 
-void comecarfase(fases fases[], int quantidade);   // inicializa as fases do jogo
+void comecarfase(fases *f, int qtd);
 
-void acabarFases(fases fases[], int quantidade);  // finaliza e libera recursos das fases
+void acabarFases(fases *f, int qtd);
 
-void atualizarFases(fases *faseAtual, jogador *jogador, TelaAtual *telaAtual);
+void atualizarFases(fases *f, jogador *j, TelaAtual *tela);
 
-void desenharFase(fases *faseAtual, jogador *jogador);  // desenha os elementos da fase atual
+void desenharFase(fases *f, jogador *j);
+
+// *** LINHA ADICIONADA PARA RESOLVER O WARNING ***
+void desenharJogadorManual(jogador *j); 
 
 #endif
-
-//criado o arquivo das fases
