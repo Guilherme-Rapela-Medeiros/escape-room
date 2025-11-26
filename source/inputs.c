@@ -3,12 +3,12 @@
 #include "../includes/structs.h" // Inclua structs.h para ter acesso ao campo estaNoChao
 
 // Ajuste esses valores para ficar "gostoso" de jogar
-#define GRAVIDADE 1.0f      
-#define FORCA_PULO -21.5f // Impulso para cima
+#define GRAVIDADE 1.0f
+#define FORCA_PULO -18.0f // Pulo menor (era -21.5f)
 
 void inputs_jogador_movimento(jogador *jogador, int largura_tela, int altura_tela, int velocidade_jogador, obstaculo *obstaculos) {
 
-    // 💡 NOTA: O parâmetro 'obstaculos' não é usado aqui, mas foi mantido na assinatura original.
+    // NOTA: O parâmetro 'obstaculos' não é usado aqui, mas foi mantido na assinatura original.
 
     int moveu = 0;
 
