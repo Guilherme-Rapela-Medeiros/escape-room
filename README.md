@@ -5,19 +5,24 @@
 # Elementos Estáticos do Jogo
 
 ### Plataformas: Espalhadas pelos níveis, servem como caminho para o jogador subir e alcançar o portal.
+
 ### Portal: Posicionado no topo ou final do mapa, é o elemento que encerra a fase e leva o jogador ao próximo nível.
+
 ### Indicador de fase: No canto superior direito da tela temos a indicação do nível atual. 
+
 ### HUD de tempo: No topo da tela, mostrando o tempo da fase e sendo usado posteriormente no ranking. 
 
 # Elementos Móveis do Jogo
 
 ### Jogador: Um personagem simples que pode se mover para a esquerda⬅️, direita➡️ e pular. Ele deve desviar dos obstáculos e subir as plataformas para alcançar o portal.
+
 ### Obstáculos: Objetos como bola de fogo que surgem no caminho. Caso o jogador encoste neles, perde -1 de vida ❤️ até ficar sem nenhuma e perder tudo. 
 
 # Fim De Jogo 
 
-## O jogo termina quando o jogador é atingido pelo obstáculo até zerar a sua vida, ou ao concluir todas as fases disponíveis.
-## Uma tela de Game Over é exibida em caso de derrota oferecendo a opção de voltar para o início ou jogar novamente. Ao finalizar o jogo, o jogador será direcionado para uma tela onde irá registrar seu nome para constar no nosso Ranking 🏆, onde ele automaticamente irá salvar os 5 melhores ⏱️ tempos de conclusão do jogo, contando do início até o 🌀portal da última fase. Após apertar ENTER, o jogo mostra os 5 melhores tempos
+### O jogo termina quando o jogador é atingido pelo obstáculo até zerar a sua vida, ou ao concluir todas as fases disponíveis.
+
+### Uma tela de Game Over é exibida em caso de derrota oferecendo a opção de voltar para o início ou jogar novamente. Ao finalizar o jogo, o jogador será direcionado para uma tela onde irá registrar seu nome para constar no nosso Ranking 🏆, onde ele automaticamente irá salvar os 5 melhores ⏱️ tempos de conclusão do jogo, contando do início até o 🌀portal da última fase. Após apertar ENTER, o jogo mostra os 5 melhores tempos
 
 # Instruções para Compilação 
 
