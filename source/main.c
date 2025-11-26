@@ -151,7 +151,19 @@ int main(void) {
         if (EscapeRoom.mapas[i].id == 0) {
             printf("ERRO: mapa %d nao carregou!\n", i + 1);
         }
+        EscapeRoom.fases[i].mapaTextura = EscapeRoom.mapas[i];
     }
+
+    //inicialização da imagem do portal
+
+    Image imgPortal = LoadImage("assets/imagens/imagem_portal.png");
+
+    for (int i = 0; i < 4; i++) {
+        EscapeRoom.fases[i].saida.sprite = LoadTextureFromImage(imgPortal);
+    }
+
+    UnloadImage(imgPortal);
+
 
 
     // =============================
@@ -573,6 +585,11 @@ int main(void) {
     for (int i = 0; i < 4; i++) {
         if (iniciarTexturas[i].id != 0) UnloadTexture(iniciarTexturas[i]);
     }
+
+    for (int i = 0; i < 4; i++) {
+        UnloadTexture(EscapeRoom.fases[i].saida.sprite);
+    }
+
 
     for (int i = 0; i < 4; i++) {
         if (EscapeRoom.mapas[i].id != 0) {

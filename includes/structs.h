@@ -67,10 +67,12 @@ typedef struct portal{
     Vector2 posicao;
     Vector2 tamanho;
     int ativo;
+    Texture2D sprite;
 } portal;
 
 typedef struct fases{
     int numero;
+    Texture2D mapaTextura;
     
     // Elementos de Fase
     obstaculo *obstaculos;

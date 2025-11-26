@@ -262,10 +262,19 @@ void desenharFase(fases *f, jogador *j) {
     if (!f || !j) return;
 
     // 1. DESENHA O PORTAL (MANTIDO)
-    if (f->saida.ativo) {
-        DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
-        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE);
-    }
+    if (f->saida.ativo && f->saida.sprite.id > 0) {
+
+        DrawTexturePro(
+            f->saida.sprite,
+            (Rectangle){0, 0, f->saida.sprite.width, f->saida.sprite.height},  // parte da imagem
+            (Rectangle){f->saida.posicao.x, f->saida.posicao.y,
+                    f->saida.tamanho.x, f->saida.tamanho.y},               // tamanho no jogo
+            (Vector2){0, 0},                                                  // origem
+            0,                                                                // rotação
+            WHITE
+            );
+        }
+
 
     // 2. DESENHA OS OBSTÁCULOS (MANTIDO)
     for (int i = 0; i < f->quantidadeObstaculos; i++) {
