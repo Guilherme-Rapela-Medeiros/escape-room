@@ -6,8 +6,25 @@
 #include <raylib.h>
 
 #define TRUE 1
-
 #define FALSE 0
+
+typedef enum {
+    TIPO_PLATAFORMA_FIXA,
+    TIPO_PLATAFORMA_MOVEL_X, // Movimento Horizontal
+    TIPO_PLATAFORMA_MOVEL_Y  // Movimento Vertical
+} TipoPlataforma;
+
+typedef struct {
+    Rectangle rect;          // Posição (x, y) e tamanho (width, height)
+    TipoPlataforma tipo;     // FIXA, MOVEL_X ou MOVEL_Y
+
+    // Campos de Movimento
+    float limiteA;       // Ponto mínimo (X ou Y)
+    float limiteB;       // Ponto máximo (X ou Y)
+    float velocidade;    // Velocidade de deslocamento (ex: 2.0f)
+    int direcao;         // +1 (A -> B) ou -1 (B -> A)
+    int isVisivel;      // Se a plataforma deve ser desenhada
+} Plataforma;
 
 typedef enum {
     TELA_MENU,
@@ -36,6 +53,7 @@ typedef struct jogador {
     Texture2D sprites[SPRITE_TOTAL];
     Texture2D textura;
     PlayerSpriteID sprite_atual;
+    int estaNoChao;
 } jogador;
 
 typedef struct obstaculo{
@@ -53,8 +71,15 @@ typedef struct portal{
 
 typedef struct fases{
     int numero;
+    
+    // Elementos de Fase
     obstaculo *obstaculos;
     int quantidadeObstaculos;
+    
+    // 💡 MODIFICAÇÃO: Array para as novas plataformas
+    Plataforma *plataformas;
+    int quantidadePlataformas;
+    
     portal saida;
     Vector2 posicaoinicial;
     int completo;
@@ -62,8 +87,8 @@ typedef struct fases{
 
 typedef struct ranking {
     char nome[TAMANHO_NOME];
-    double tempo;             // agora é o ÚNICO critério de rank
-    struct ranking *prox;     // lista ligada
+    double tempo; 
+    struct ranking *prox; 
 } ranking;
 
 typedef struct jogo {
@@ -72,7 +97,7 @@ typedef struct jogo {
     int telaAtual;
     int FaseAtual;
     fases fases[4];
-    Texture2D mapas[4]; //array de texturas dos mapas
+    Texture2D mapas[4]; 
     ranking *Head;
 } jogo;
 
