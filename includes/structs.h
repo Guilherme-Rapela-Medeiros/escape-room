@@ -34,6 +34,7 @@ typedef struct jogador {
     char nome[TAMANHO_NOME];
     float velocidade_vertical;
     Texture2D sprites[SPRITE_TOTAL];
+    Texture2D textura;
     PlayerSpriteID sprite_atual;
 } jogador;
 
