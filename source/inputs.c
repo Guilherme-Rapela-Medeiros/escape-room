@@ -2,8 +2,9 @@
 #include "raylib.h"
 
 // Ajuste esses valores para ficar "gostoso" de jogar
-#define GRAVIDADE 0.8f
-#define FORCA_PULO -18.0f
+#define GRAVIDADE 1.0f    // Mantida: Garante que a queda continue rápida.
+// *** VALOR AJUSTADO FINAL: Aumentado de -21.0f para -21.5f para um pulo quase imperceptívelmente maior. ***
+#define FORCA_PULO -21.5f 
 
 void inputs_jogador_movimento(jogador *jogador, int largura_tela, int altura_tela, int velocidade_jogador, obstaculo *obstaculos) {
 
