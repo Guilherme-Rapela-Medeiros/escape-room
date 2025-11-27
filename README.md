@@ -46,6 +46,10 @@
 
 ### *O tempo começa a contar assim que a fase inicia*. ⏱️
 
+# Link do Screencast do Jogo Rodando 
+
+## https://youtu.be/jo70bxNcbro?si=IQhFPlLaQoMvCGbj
+
 # Membros: 
 
 ### *Organizados por nome e por email da school*
