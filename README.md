@@ -28,7 +28,7 @@
 
 ### 1) *É necessário ter a biblioteca Raylib instalada.*
 
-### 2)*Abra o terminal e digite o seguinte comando " gcc source/*.c -o escape_room -Iincludes -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"* 
+### 2)*Abra o terminal, clone esse repositório e digite o seguinte comando " gcc source/*.c -o escape_room -Iincludes -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"* 
 
 ### 3) *Em seguida, digite o comando " ./escape_room" *
 
