@@ -57,17 +57,24 @@ typedef struct jogador {
 } jogador;
 
 typedef struct obstaculo{
-    Vector2 posicao;
-    Vector2 tamanho;
+    // 💡 MODIFICAÇÃO: Usando Rectangle para facilitar colisão e desenho
+    Rectangle hitbox; 
+    
+    // Vector2 posicao; // Removido
+    // Vector2 tamanho; // Removido
+    
     Vector2 velocidade;
     int ativo;
+    
+    // 💡 MODIFICAÇÃO: Campo para armazenar o PNG do obstáculo
+    Texture2D textura; 
 } obstaculo;
 
 typedef struct portal{
     Vector2 posicao;
     Vector2 tamanho;
     int ativo;
-    // 🔑 CAMPO ADICIONADO: Para a textura do PNG
+    // 🔑 CAMPO MANTIDO: Para a textura do PNG
     Texture2D textura; 
 } portal;
 
@@ -77,6 +84,9 @@ typedef struct fases{
     // Elementos de Fase
     obstaculo *obstaculos;
     int quantidadeObstaculos;
+    
+    // 💡 MODIFICAÇÃO: Textura padrão para os obstáculos da fase, carregada uma única vez
+    Texture2D texturaObstaculo;
     
     // 💡 MODIFICAÇÃO: Array para as novas plataformas
     Plataforma *plataformas;

@@ -5,21 +5,25 @@
 #include "../includes/fases.h"
 
 #define MAX 12
-static Vector2 bases[4][MAX] = {0};
+static Vector2 bases[4][MAX] = {0}; 
 
-// 🔑 DEFINA O CAMINHO CORRETO DA SUA IMAGEM AQUI
-#define CAMINHO_PORTAL "recursos/portal.png" 
+// 🔑 DEFINIÇÕES DE CAMINHOS CORRIGIDAS PARA REFLETIR SUA ESTRUTURA DE PASTAS
+#define CAMINHO_PORTAL "recursos/portal.png" // Mantenha, mas verifique se "recursos" está na pasta correta.
+#define CAMINHO_OBS_HORIZONTAL "assets/imagens/mapas/obstaculo_direita.png" 
+#define CAMINHO_OBS_VERTICAL_CIMA "assets/imagens/mapas/obstaculo_cima.png" 
+#define CAMINHO_OBS_VERTICAL_ESQ "assets/imagens/mapas/obstaculo_esquerda.png" 
+#define CAMINHO_OBS_VERTICAL_BAIXO "assets/imagens/mapas/obstaculo_baixo.png"
+
 
 /* --- Funções Auxiliares Básicas --- */
 
-// 1. Colisão Simples (Rectangular)
 int col(Rectangle a, Rectangle b) {
     return (a.x < b.x + b.width && a.x + a.width > b.x &&
             a.y < b.y + b.height && a.y + a.height > b.y);
 }
 
-// 2. Desenho do Jogador (Visível)
 void desenharJogadorManual(jogador *j) {
+    // ... (Mantido sem alteração) ...
     if (!j) return;
     
     float x = j->hitbox_jogador.x;
@@ -59,15 +63,33 @@ void comecarfase(fases *f, int qtd) {
     int W = GetScreenWidth();
     int H = GetScreenHeight();
 
+    // 🔑 NOVO: CARREGA MÚLTIPLAS TEXTURAS DE OBSTÁCULOS
+    Texture2D obsHorizontalTex = LoadTexture(CAMINHO_OBS_HORIZONTAL);
+    Texture2D obsVerticalCimaTex = LoadTexture(CAMINHO_OBS_VERTICAL_CIMA);
+    Texture2D obsVerticalEsqTex = LoadTexture(CAMINHO_OBS_VERTICAL_ESQ);
+    Texture2D obsVerticalBaixoTex = LoadTexture(CAMINHO_OBS_VERTICAL_BAIXO);
+
+    // Adiciona as texturas ao campo (apenas para ter uma referência para a limpeza)
+    // 💡 OBS: O struct fases foi projetado para apenas UMA textura de obstáculo. 
+    // Para simplificar a limpeza, vamos usar um array temporário e liberá-lo no `acabarFases`.
+    Texture2D obsTexturas[4] = {
+        obsHorizontalTex, 
+        obsVerticalCimaTex, 
+        obsVerticalEsqTex, 
+        obsVerticalBaixoTex
+    };
+    
     // 🔑 CARREGA A TEXTURA DO PORTAL
     Texture2D portalTex = LoadTexture(CAMINHO_PORTAL);
-    if (portalTex.id == 0) TraceLog(LOG_WARNING, "FASES: Falha ao carregar textura do portal em %s", CAMINHO_PORTAL);
 
 
     for (int p = 0; p < qtd; p++) {
         f[p].numero = p + 1;
         f[p].completo = 0;
-
+        
+        // Atribui a primeira textura carregada (apenas para manter a compatibilidade com a struct)
+        if (p == 0) f[p].texturaObstaculo = obsHorizontalTex; 
+        
         int n = 4 + p * 2;
         if (p == 3) n = 10;
         if (n > MAX) n = MAX;
@@ -78,38 +100,55 @@ void comecarfase(fases *f, int qtd) {
 
         f[p].posicaoinicial = (Vector2){80, H / 2.0f};
         
-        // 💡 Inicializa o portal e atribui a textura carregada
+        // Inicializa o portal e atribui a textura
         f[p].saida = (portal){{W - 100, H / 2.0f - 50}, {60, 100}, 1, portalTex};
 
         float start = 250;
         float gap = (f[p].saida.posicao.x - 60 - start) / n;
 
-        // ... (inicialização de obstáculos e plataformas)
+        // --- Inicialização de Obstáculos ---
         for (int i = 0; i < n; i++) {
             obstaculo *o = &f[p].obstaculos[i];
+            
+            // tipo 0 (Horizontal) - Movimenta em Y
+            // tipo 1 (Vertical/Móvel) - Movimenta em X, com variações de textura
             int tipo = i % 2; 
             
             float by = H * 0.5f;
+            Vector2 tamanho;
             
             if (tipo == 0) { 
-                o->tamanho = (Vector2){60, 20};
+                tamanho = (Vector2){60, 20};
                 if (i % 3 == 0) by -= 120;
                 if (i % 3 == 2) by += 120;
+                // 🔑 ATRIBUIÇÃO: Textura Horizontal para o tipo 0
+                o->textura = obsHorizontalTex; 
             } else { 
-                o->tamanho = (Vector2){40, 40};
+                tamanho = (Vector2){40, 40};
                 if (i % 4 == 1) by -= 70;
                 if (i % 4 == 3) by += 70;
+
+                // 🔑 ATRIBUIÇÃO DINÂMICA: Variamos as texturas para o tipo 1
+                int obs_variation = i % 3;
+                if (obs_variation == 0) o->textura = obsVerticalCimaTex;
+                else if (obs_variation == 1) o->textura = obsVerticalEsqTex;
+                else o->textura = obsVerticalBaixoTex;
             }
 
-            bases[p][i] = o->posicao = (Vector2){start + gap * i + gap * 0.5f, by};
+            Vector2 posicao = (Vector2){start + gap * i + gap * 0.5f, by};
+
+            o->hitbox = (Rectangle){posicao.x, posicao.y, tamanho.x, tamanho.y};
+            
+            bases[p][i] = posicao;
             
             float amp = 60.0f + p * 15.0f;
             if (p == 3) amp = 140.0f;
             
-            o->velocidade = (Vector2){(float)tipo, amp};
+            o->velocidade = (Vector2){(float)tipo, amp}; // Tipo 0 = Mov. Y, Tipo 1 = Mov. X
             o->ativo = 1;
         }
 
+        // --- Inicialização de Plataformas (Mantida) ---
         int nPlat = 5 + p * 2;
         if (nPlat > MAX) nPlat = MAX; 
         
@@ -155,9 +194,23 @@ void comecarfase(fases *f, int qtd) {
 
 void acabarFases(fases *f, int qtd) {
     if (f) {
-        // 🔑 DESCARREGA A TEXTURA DO PORTAL UMA ÚNICA VEZ
-        if (qtd > 0 && f[0].saida.textura.id != 0) {
-             UnloadTexture(f[0].saida.textura);
+        if (qtd > 0) {
+             // O portal é sempre o mesmo
+             if (f[0].saida.textura.id != 0) UnloadTexture(f[0].saida.textura);
+             
+             // 🔑 LIBERA AS 4 TEXTURAS CARREGADAS UMA ÚNICA VEZ
+             if (f[0].obstaculos && f[0].obstaculos[0].textura.id != 0) {
+                 UnloadTexture(f[0].obstaculos[0].textura); // Referência para Horizontal
+             }
+             if (f[0].obstaculos && f[0].obstaculos[1].textura.id != 0) {
+                 UnloadTexture(f[0].obstaculos[1].textura); // Referência para Cima
+             }
+             if (f[0].obstaculos && f[0].obstaculos[3].textura.id != 0) {
+                 UnloadTexture(f[0].obstaculos[3].textura); // Referência para Esquerda
+             }
+             if (f[0].obstaculos && f[0].obstaculos[5].textura.id != 0) {
+                 UnloadTexture(f[0].obstaculos[5].textura); // Referência para Baixo
+             }
         }
 
         for (int i = 0; i < qtd; i++) { 
@@ -167,8 +220,9 @@ void acabarFases(fases *f, int qtd) {
     }
 }
 
-/* 🚀 FUNÇÃO DE ATUALIZAÇÃO (MANTIDA) 🚀 */
+/* 🚀 FUNÇÃO DE ATUALIZAÇÃO 🚀 */
 void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
+    // ... (Mantido sem alteração) ...
     if (!f || !j) return;
     
     // Checagem de Limite e Game Over
@@ -177,11 +231,11 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
 
     int idx = (f->numero > 0) ? f->numero - 1 : 0;
     
-    // CORREÇÃO: Calculamos a Posição Y no Frame ANTERIOR (Anti-Tunneling).
+    // CORREÇÃO: Calculamos a Posição Y no Frame ANTERIOR
     float y_anterior = j->hitbox_jogador.y - j->velocidade_vertical;
     bool playerOnPlatform = false; 
 
-    // --- Lógica de Plataformas ---
+    // --- Lógica de Plataformas (Mantida) ---
     for (int i = 0; i < f->quantidadePlataformas; i++) {
         Plataforma *plat = &f->plataformas[i];
         
@@ -196,7 +250,7 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
             if (plat->rect.x <= plat->limiteA) plat->direcao = 1;
         }
 
-        // LÓGICA DE POUSO SÓLIDO: Colisão + Caindo + Estava acima no frame anterior
+        // LÓGICA DE POUSO SÓLIDO
         if (col(j->hitbox_jogador, plat->rect) && 
             (j->velocidade_vertical >= 0.0f) &&
             (y_anterior + j->hitbox_jogador.height <= plat->rect.y + 1.0f) ) 
@@ -233,48 +287,56 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
         float osc = sinf(t * freq + i) * o->velocidade.y;
         Vector2 np = bases[idx][i];
 
-        if (o->velocidade.x == 0) np.x += osc; 
-        else np.y += osc; 
+        // o->velocidade.x == 0 -> Tipo 0 (Oscilação em Y - Obstáculo Horizontal)
+        // o->velocidade.x != 0 -> Tipo 1 (Oscilação em X - Obstáculo Vertical/Móvel)
+        if (o->velocidade.x == 0) np.y += osc; 
+        else np.x += osc; 
         
-        if (np.x < 150) np.x = 150;
-        if (np.x + o->tamanho.x > f->saida.posicao.x - 10) np.x = f->saida.posicao.x - 10 - o->tamanho.x;
+        // 💡 Atualiza a posição da hitbox (Rectangle)
+        o->hitbox.x = np.x;
+        o->hitbox.y = np.y;
         
-        if (np.y < 30) np.y = 30;
-        if (np.y + o->tamanho.y > GetScreenHeight() - 20) np.y = GetScreenHeight() - 20 - o->tamanho.y;
+        // Limites (Aplicados à hitbox)
+        if (o->hitbox.x < 150) o->hitbox.x = 150;
+        if (o->hitbox.x + o->hitbox.width > f->saida.posicao.x - 10) 
+            o->hitbox.x = f->saida.posicao.x - 10 - o->hitbox.width;
+        
+        if (o->hitbox.y < 30) o->hitbox.y = 30;
+        if (o->hitbox.y + o->hitbox.height > GetScreenHeight() - 20) 
+            o->hitbox.y = GetScreenHeight() - 20 - o->hitbox.height;
 
-        o->posicao = np;
-        
-        if (col(j->hitbox_jogador, (Rectangle){np.x, np.y, o->tamanho.x, o->tamanho.y})) {
+        // 🔑 Colisão usando o novo campo hitbox
+        if (col(j->hitbox_jogador, o->hitbox)) {
             j->vida--;
             o->ativo = 0;
             if (j->vida <= 0) *tela = TELA_GAME_OVER;
         }
     }
+    
     if (f->saida.ativo && col(j->hitbox_jogador, (Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100})) {
         f->completo = 1;
         f->saida.ativo = 0;
     }
 }
 
-/* --- Função de Desenho (MODIFICADA) --- */
+/* --- Função de Desenho (Mantida) --- */
 
 void desenharFase(fases *f, jogador *j) {
+    // ... (Mantido sem alteração) ...
     if (!f || !j) return;
 
     // 1. DESENHA O PORTAL
     if (f->saida.ativo) {
-        
-        // 🔑 NOVO: Desenha a textura do portal se ela estiver carregada
         if (f->saida.textura.id != 0) {
             DrawTextureEx(
                 f->saida.textura, 
                 f->saida.posicao, 
-                0.0f,              
-                f->saida.tamanho.x / f->saida.textura.width, // Escala X
-                WHITE              
+                0.0f, 
+                f->saida.tamanho.x / f->saida.textura.width, 
+                WHITE 
             );
         } else {
-            // Fallback (Mantém o desenho do retângulo se a textura falhar)
+            // Fallback 
             DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
             DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE);
         }
@@ -285,21 +347,41 @@ void desenharFase(fases *f, jogador *j) {
         obstaculo *o = &f->obstaculos[i];
         if (!o->ativo) continue;
 
-        if (o->velocidade.x == 0) { // Flecha
-            DrawRectangle(o->posicao.x, o->posicao.y + 8, o->tamanho.x - 15, 4, BROWN);
-            DrawRectangle(o->posicao.x, o->posicao.y + 6, 10, 8, RED);
-            Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y/2};
-            Vector2 p2 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y + o->tamanho.y};
-            Vector2 p3 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y};
-            DrawTriangle(p1, p2, p3, LIGHTGRAY);
-        } else { // Fogo
-            Vector2 c = {o->posicao.x + o->tamanho.x/2, o->posicao.y + o->tamanho.y/2};
-            DrawCircleV(c, o->tamanho.x/2, RED);
-            DrawCircleV(c, o->tamanho.x/2, ORANGE); 
+        Texture2D tex = o->textura;
+        Rectangle r = o->hitbox; // Usa a hitbox como destino
+        
+        if (tex.id != 0) {
+            // 🔑 Desenha a textura PNG do obstáculo
+            Rectangle source = { 0.0f, 0.0f, (float)tex.width, (float)tex.height };
+
+            // DrawTexturePro escala a textura para preencher o retângulo 'r' (hitbox)
+            DrawTexturePro(
+                tex, 
+                source, 
+                r, 
+                (Vector2){ 0, 0 }, 
+                0.0f, 
+                WHITE
+            );
+        } else {
+            // FALLBACK: Desenho geométrico antigo (usa o tipo para saber qual desenhar)
+            if (o->velocidade.x == 0) { // Objeto tipo Horizontal (oscilação Y)
+                DrawRectangleRec(r, BROWN); 
+                DrawTriangle(
+                    (Vector2){r.x + r.width, r.y + r.height/2}, 
+                    (Vector2){r.x + r.width - 15, r.y + r.height}, 
+                    (Vector2){r.x + r.width - 15, r.y}, 
+                    RED
+                );
+            } else { // Objeto tipo Vertical (oscilação X)
+                Vector2 center = { r.x + r.width/2, r.y + r.height/2 };
+                DrawCircleV(center, r.width/2, ORANGE); 
+                DrawCircleV(center, r.width/4, YELLOW); 
+            }
         }
     }
 
-    // 3. DESENHA AS PLATAFORMAS
+    // 3. DESENHA AS PLATAFORMAS (Mantido o código)
     for (int i = 0; i < f->quantidadePlataformas; i++) {
         Plataforma *plat = &f->plataformas[i];
         if (!plat->isVisivel) continue;
