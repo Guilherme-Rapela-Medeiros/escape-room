@@ -29,7 +29,6 @@ void inserirRanking(ranking **head, const char *nome, float tempo) {
     aux->prox = novo;
 }
 
-// Salvar ranking em arquivo texto
 void salvarRanking(ranking *head, const char *filename) {
     FILE *fp = fopen(filename, "w");
     if (!fp) return;
@@ -43,7 +42,6 @@ void salvarRanking(ranking *head, const char *filename) {
     fclose(fp);
 }
 
-// Carregar ranking de arquivo
 void carregarRanking(ranking **head, const char *filename) {
     FILE *fp = fopen(filename, "r");
     if (!fp) return;
@@ -58,7 +56,6 @@ void carregarRanking(ranking **head, const char *filename) {
     fclose(fp);
 }
 
-// Liberar lista encadeada
 void liberarRanking(ranking **head) {
     ranking *aux;
 

@@ -3,9 +3,7 @@
 #include "../includes/structs.h"
 #include <stdio.h>
 
-// ============================================
-// MATRIZES DAS FASES (12 linhas x 16 colunas)
-// ============================================
+
 // Legenda:
 // 0 = vazio
 // 1 = plataforma
@@ -76,15 +74,6 @@ int mapa_fase_4[MAPA_LINHAS][MAPA_COLUNAS] = {
     {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 };
-
-// ============================================
-// IMPLEMENTAÇÃO DAS FUNÇÕES
-// ============================================
-
-//* Inicializa a matriz da fase (preenche com valores base)
-//* mapa Array 2D para armazenar a fase
-// * numeroFase Número da fase (1-4)
- 
  
  void carregarMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], int numeroFase) {
     if (!mapa) return;
@@ -121,10 +110,7 @@ int mapa_fase_4[MAPA_LINHAS][MAPA_COLUNAS] = {
     }
 }
 
-
 //* Desenha o mapa na tela com cores diferentes para cada tipo de bloco
-// *  mapa Array 2D com os dados do mapa
-// * texturas Ponteiro para struct TexturasMapa (pode ser NULL)
 
 void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], TexturasMapa *texturas) {
     if (!mapa) return;
@@ -163,9 +149,6 @@ void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], TexturasMapa *texturas) {
     }
 }
 
-/**
- * Verifica se há colisão entre o jogador e obstáculos do mapa
- */
 int verificarColisaoMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle hitbox_jogador) {
     if (!mapa) return 0;
 
@@ -189,9 +172,6 @@ int verificarColisaoMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle hitbox_j
     return 0;
 }
 
-/**
- * Verifica se o jogador está em pé numa plataforma (colisão inferior)
- */
 int estaEmPlatafora(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle hitbox_jogador) {
     if (!mapa) return 0;
 
@@ -224,9 +204,6 @@ int estaEmPlatafora(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle hitbox_jogado
     return 0;
 }
 
-/**
- * Verifica se o jogador tocou no portal (saída da fase)
- */
 int verificarPortal(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle hitbox_jogador) {
     if (!mapa) return 0;
 
