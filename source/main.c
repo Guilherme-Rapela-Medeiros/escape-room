@@ -1,4 +1,3 @@
-// source/main.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,19 +15,12 @@
 #define ARQUIVO_RANKING "ranking.txt"
 #define TOP_N 5
 
-// Supondo que você definiu esta struct (ou a similar) em structs.h
 typedef struct {
     Rectangle rect;
     const char *texto;
     bool hovered;
 } Botao;
 
-
-// --- Protótipos de Funções Auxiliares (Assumindo que estão aqui ou em includes) ---
-// Note: desenharJogadorManual não precisa de protótipo aqui se for declarado em inputs.h
-// ou outro header já incluído.
-
-/* formata tempo float (segundos) para MM:SS.mmm */
 static void formatar_tempo(float tempo, char *out, size_t outlen) {
     if (!out) return;
     int minutos = (int)(tempo / 60.0f);
@@ -40,14 +32,13 @@ static void formatar_tempo(float tempo, char *out, size_t outlen) {
     snprintf(out, outlen, "%02d:%02d.%03d", minutos, segundos, miles);
 }
 
-/* Mantém somente os TOP_N nós (libera o resto) */
 static void manter_top_n(ranking **head, int n) {
     if (!head || !*head) return;
     ranking *atual = *head;
     int count = 1;
     while (atual && atual->prox) {
         if (count == n) {
-            /* libera o resto da lista */
+          
             ranking *rem = atual->prox;
             atual->prox = NULL;
             while (rem) {
@@ -62,7 +53,6 @@ static void manter_top_n(ranking **head, int n) {
     }
 }
 
-/* Renderiza o ranking na tela (até TOP_N) */
 static void desenhar_ranking_na_tela(ranking *head) {
     int y = 140;
     int i = 1;
@@ -71,7 +61,6 @@ static void desenhar_ranking_na_tela(ranking *head) {
         char buf[128];
         formatar_tempo(it->tempo, buf, sizeof(buf));
         
-        // Cores alternadas para facilitar leitura
         Color corTexto = (i == 1) ? YELLOW : WHITE; 
         
         DrawText(TextFormat("%d. %s", i, it->nome[0] ? it->nome : "(sem nome)"), 120, y, 20, corTexto);
@@ -87,17 +76,9 @@ int main(void) {
     InitWindow(LARGURA_TELA, ALTURA_TELA, "Escape Room");
     SetTargetFPS(60);
 
-    // =============================
-    // SISTEMA DE TEMPO
-    // =============================
     float tempoTotal = 0.0f; 
-    bool tempoRodando = false; 
-
-    // =============================
-    // CARREGAMENTO DE IMAGENS (MODO SEGURO)
-    // =============================
+    int tempoRodando = false; 
     
-    // 1. Menu Inicial
     Image menuImg = LoadImage("assets/imagens/menu.inicial.png");
     Texture2D menuTextura = {0};
     if (menuImg.data != NULL) {
@@ -105,7 +86,6 @@ int main(void) {
         UnloadImage(menuImg);
     }
 
-    // 2. Tutorial
     Image tutorialImg = LoadImage("assets/imagens/tela.tutorial.png");
     Texture2D tutorialTextura = {0};
     if (tutorialImg.data != NULL) {
@@ -113,7 +93,6 @@ int main(void) {
         UnloadImage(tutorialImg);
     }
 
-    // 3. Telas de Início de Fase
     Texture2D iniciarTexturas[4] = {0};
     const char* pathsIniciar[4] = {
         "assets/imagens/iniciar.fase1.png",
@@ -129,10 +108,6 @@ int main(void) {
             UnloadImage(tempImg);
         }
     }
-
-    // =============================
-    // 4. Mapas das fases e Estado Global
-    // =============================
     jogo EscapeRoom;
 
     const char* pathsMapas[4] = {
@@ -159,15 +134,11 @@ int main(void) {
     EscapeRoom.FimDeJogo = FALSE;
     EscapeRoom.FaseAtual = 0;
 
-    // Configuração Inicial do Jogador
     EscapeRoom.jogador.vida = 3;
     EscapeRoom.jogador.hitbox_jogador = (Rectangle){
         LARGURA_TELA / 2.0f - 25, ALTURA_TELA / 2.0f - 25, 50, 50
     };
-    // Inicialização do novo membro estaNoChao
-    EscapeRoom.jogador.estaNoChao = 0; 
-    
-    // REMOVIDO: Toda a lógica de carregamento de sprites do jogador (PNGs)
+    EscapeRoom.jogador.estaNoChao = 0;   
     
     comecarfase(EscapeRoom.fases, TOTAL_FASES);
 
@@ -197,25 +168,18 @@ int main(void) {
     int selecionado = 0;
     botoes[0].hovered = true;
 
-    // Inicialização do Ranking
     ranking *rankHead = NULL;
     carregarRanking(&rankHead, ARQUIVO_RANKING);
     manter_top_n(&rankHead, TOP_N);
 
-    // Variáveis da Tela Final (Input de Nome)
     char nomeInput[TAMANHO_NOME] = {0};
     int nomeLen = 0;
     int finalNomeConfirmado = false;
 
-    // =================================================================
-    //                            LOOP PRINCIPAL
-    // =================================================================
     while (!WindowShouldClose() && !EscapeRoom.FimDeJogo) {
 
-        // --- UPDATE ---
-
         if (telaAtual == TELA_MENU) {
-            // Lógica de navegação do menu (setas, mouse, enter)
+    
             if (IsKeyPressed(KEY_DOWN)) selecionado = (selecionado + 1) % nBotoes;
             else if (IsKeyPressed(KEY_UP)) selecionado = (selecionado - 1 + nBotoes) % nBotoes;
 
@@ -228,7 +192,7 @@ int main(void) {
                     selecionado = i;
                     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ativou = true;
                 } else {
-                    // Mantém o hover pelo teclado se não estiver sob o mouse
+                    
                     botoes[i].hovered = (i == selecionado); 
                 }
             }
@@ -312,23 +276,22 @@ int main(void) {
                 inputs_jogador_movimento(&EscapeRoom.jogador, LARGURA_TELA, ALTURA_TELA,
                                          5, EscapeRoom.fases[EscapeRoom.FaseAtual].obstaculos);
 
-                // Atualização da Fase e Colisão (inclui perda de vida e Game Over)
                 atualizarFases(&EscapeRoom.fases[EscapeRoom.FaseAtual], &EscapeRoom.jogador, &telaAtual);
 
                 // Lógica de Fim de Fase/Avanco
                 if (EscapeRoom.fases[EscapeRoom.FaseAtual].completo) {
-                    tempoRodando = false; // Pausa o tempo
+                    tempoRodando = false; 
                     EscapeRoom.FaseAtual++;
                     
                     if (EscapeRoom.FaseAtual >= TOTAL_FASES) {
                         EscapeRoom.FaseAtual = TOTAL_FASES;
-                        telaAtual = TELA_FINAL; // Venceu o jogo
+                        telaAtual = TELA_FINAL; 
                         
                         nomeInput[0] = '\0';
                         nomeLen = 0;
                         finalNomeConfirmado = false;
                     } else {
-                        telaAtual = TELA_JOGO; // Próxima tela de "Iniciar Fase X"
+                        telaAtual = TELA_JOGO; 
                     }
                     telaJustChanged = true;
                 }
@@ -542,8 +505,6 @@ int main(void) {
             UnloadTexture(EscapeRoom.mapas[i]);
         }
     }
-
-    // REMOVIDO: Unload de sprites do jogador
     
     if (rankHead) {
         salvarRanking(rankHead, ARQUIVO_RANKING);

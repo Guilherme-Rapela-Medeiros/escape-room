@@ -4,12 +4,6 @@
 #include <stdio.h>
 
 
-// Legenda:
-// 0 = vazio
-// 1 = plataforma
-// 2 = obstáculo
-// 3 = portal (saída)
-
 // FASE 1: Fácil - poucas plataformas, layout simples
 int mapa_fase_1[MAPA_LINHAS][MAPA_COLUNAS] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -109,8 +103,6 @@ int mapa_fase_4[MAPA_LINHAS][MAPA_COLUNAS] = {
         }
     }
 }
-
-//* Desenha o mapa na tela com cores diferentes para cada tipo de bloco
 
 void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], TexturasMapa *texturas) {
     if (!mapa) return;

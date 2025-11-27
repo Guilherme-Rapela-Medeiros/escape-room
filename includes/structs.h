@@ -82,11 +82,9 @@ typedef struct portal{
 typedef struct fases{
     int numero;
     
-    // Elementos de Fase
     obstaculo *obstaculos;
     int quantidadeObstaculos;
     
-    // 💡 MODIFICAÇÃO: Array para as novas plataformas
     Plataforma *plataformas;
     int quantidadePlataformas;
     

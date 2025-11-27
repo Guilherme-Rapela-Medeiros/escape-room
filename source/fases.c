@@ -1,14 +1,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include "raylib.h"
-#include "../includes/structs.h" // Agora com Plataforma e TipoPlataforma
+#include "../includes/structs.h" 
 #include "../includes/fases.h"
 
 #define MAX 12
-// Bases estáticas para o movimento dos obstáculos (MANTIDO)
-static Vector2 bases[4][MAX] = {0};
 
-/* --- Funções Auxiliares --- */
+static Vector2 bases[4][MAX] = {0};
 
 // Função simples de colisão (MANTIDO)
 int col(Rectangle a, Rectangle b) {
@@ -16,55 +14,40 @@ int col(Rectangle a, Rectangle b) {
             a.y < b.y + b.height && a.y + a.height > b.y);
 }
 
-// NOVO: Desenha o boneco do jogador manualmente (MANTIDO)
 void desenharJogadorManual(jogador *j) {
     if (!j) return;
     
-    // Pegamos a posição X e Y da "alma" (hitbox) para saber onde desenhar
     float x = j->hitbox_jogador.x;
     float y = j->hitbox_jogador.y;
     float w = j->hitbox_jogador.width;
     float h = j->hitbox_jogador.height;
 
-    // O "Pivô" do boneco é o centro da base (nos pés)
     Vector2 pe = { x + w/2, y + h }; 
 
-    // Cores
     Color pele = BEIGE;
     Color roupa = BLUE;
 
-    // Detecta direção (Gambiarra visual baseada no input)
     int viradoDireita = (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) ? 1 : 0;
     if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1; // Padrão direita
 
-    // --- DESENHO DO BONECO ---
-    
-    // Cabeça (Flutuando acima da hitbox)
     DrawCircle(pe.x, pe.y - 45, 10, pele);
 
-    // Corpo (Tronco)
     DrawRectangle(pe.x - 8, pe.y - 35, 16, 20, roupa);
 
-    // Pernas (Simulando movimento se estiver andando)
     float balanco = sinf(GetTime() * 10.0f) * 5.0f;
     if (!IsKeyDown(KEY_RIGHT) && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D)) balanco = 0;
 
-    // Perna Esquerda
     DrawLineEx((Vector2){pe.x - 4, pe.y - 15}, (Vector2){pe.x - 4 + balanco, pe.y}, 4, DARKBLUE);
-    // Perna Direita
+
     DrawLineEx((Vector2){pe.x + 4, pe.y - 15}, (Vector2){pe.x + 4 - balanco, pe.y}, 4, DARKBLUE);
 
-    // Braços
     if (viradoDireita) {
-        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); // Aponta pra frente
+        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); 
     } else {
-        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); // Aponta pra tras
+        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); 
     }
 }
 
-/* --- Funções de Inicialização e Limpeza --- */
-
-// MODIFICADA: Adiciona inicialização das plataformas
 void comecarfase(fases *f, int qtd) {
     if (!f) return;
     int W = GetScreenWidth();
@@ -74,9 +57,6 @@ void comecarfase(fases *f, int qtd) {
         f[p].numero = p + 1;
         f[p].completo = 0;
 
-        // ----------------------------------------------------
-        // SEU CÓDIGO ORIGINAL DE INICIALIZAÇÃO DE OBSTÁCULOS (MANTIDO)
-        // ----------------------------------------------------
         int n = 4 + p * 2;
         if (p == 3) n = 10;
         if (n > MAX) n = MAX;
@@ -93,15 +73,15 @@ void comecarfase(fases *f, int qtd) {
 
         for (int i = 0; i < n; i++) {
             obstaculo *o = &f[p].obstaculos[i];
-            int tipo = i % 2; // 0 = Flecha, 1 = Fogo
+            int tipo = i % 2; 
             
             float by = H * 0.5f;
             
-            if (tipo == 0) { // Flecha
+            if (tipo == 0) { 
                 o->tamanho = (Vector2){60, 20};
                 if (i % 3 == 0) by -= 120;
                 if (i % 3 == 2) by += 120;
-            } else { // Fogo
+            } else { 
                 o->tamanho = (Vector2){40, 40};
                 if (i % 4 == 1) by -= 70;
                 if (i % 4 == 3) by += 70;
@@ -115,23 +95,18 @@ void comecarfase(fases *f, int qtd) {
             o->velocidade = (Vector2){(float)tipo, amp};
             o->ativo = 1;
         }
-        // ----------------------------------------------------
 
-        // ==========================================================
-        // 💡 NOVO: INICIALIZAÇÃO E LAYOUT DE PLATAFORMAS
-        // ==========================================================
-        int nPlat = 5 + p * 2; // Progressão: 5, 7, 9, 11 plataformas
+        int nPlat = 5 + p * 2; 
         if (nPlat > MAX) nPlat = MAX; 
         
         f[p].quantidadePlataformas = nPlat;
         f[p].plataformas = malloc(sizeof(Plataforma) * nPlat);
         if (!f[p].plataformas) continue;
 
-        // Parâmetros do layout "escadinha"
-        float px = 80.0f; // Posição X inicial
-        float py = H - 150.0f; // Posição Y inicial (do chão para cima)
-        float gapX = (W - 200.0f) / nPlat; // Espaçamento horizontal
-        float gapY = 80.0f; // Espaçamento vertical
+        float px = 80.0f; 
+        float py = H - 150.0f; 
+        float gapX = (W - 200.0f) / nPlat; 
+        float gapY = 80.0f; 
         float platW = 80.0f;
         float platH = 20.0f;
 
