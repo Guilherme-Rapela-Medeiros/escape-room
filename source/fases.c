@@ -1,95 +1,82 @@
 #include <stdlib.h>
 #include <math.h>
 #include "raylib.h"
-#include "../includes/structs.h" 
+#include "../includes/structs.h" // Agora com Plataforma e TipoPlataforma
 #include "../includes/fases.h"
 
 #define MAX 12
-static Vector2 bases[4][MAX] = {0}; 
+// Bases estáticas para o movimento dos obstáculos (MANTIDO)
+static Vector2 bases[4][MAX] = {0};
 
-// 🔑 DEFINIÇÕES DE CAMINHOS CORRIGIDAS PARA REFLETIR SUA ESTRUTURA DE PASTAS
-#define CAMINHO_PORTAL "recursos/portal.png" // Mantenha, mas verifique se "recursos" está na pasta correta.
-#define CAMINHO_OBS_HORIZONTAL "assets/imagens/mapas/obstaculo_direita.png" 
-#define CAMINHO_OBS_VERTICAL_CIMA "assets/imagens/mapas/obstaculo_cima.png" 
-#define CAMINHO_OBS_VERTICAL_ESQ "assets/imagens/mapas/obstaculo_esquerda.png" 
-#define CAMINHO_OBS_VERTICAL_BAIXO "assets/imagens/mapas/obstaculo_baixo.png"
+/* --- Funções Auxiliares --- */
 
-
-/* --- Funções Auxiliares Básicas --- */
-
+// Função simples de colisão (MANTIDO)
 int col(Rectangle a, Rectangle b) {
     return (a.x < b.x + b.width && a.x + a.width > b.x &&
             a.y < b.y + b.height && a.y + a.height > b.y);
 }
 
+// NOVO: Desenha o boneco do jogador manualmente (MANTIDO)
 void desenharJogadorManual(jogador *j) {
-    // ... (Mantido sem alteração) ...
     if (!j) return;
     
+    // Pegamos a posição X e Y da "alma" (hitbox) para saber onde desenhar
     float x = j->hitbox_jogador.x;
     float y = j->hitbox_jogador.y;
     float w = j->hitbox_jogador.width;
     float h = j->hitbox_jogador.height;
 
+    // O "Pivô" do boneco é o centro da base (nos pés)
     Vector2 pe = { x + w/2, y + h }; 
 
+    // Cores
     Color pele = BEIGE;
     Color roupa = BLUE;
 
+    // Detecta direção (Gambiarra visual baseada no input)
     int viradoDireita = (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) ? 1 : 0;
-    if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1;
+    if (!viradoDireita && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A)) viradoDireita = 1; // Padrão direita
 
-    // Desenho do Boneco
+    // --- DESENHO DO BONECO ---
+    
+    // Cabeça (Flutuando acima da hitbox)
     DrawCircle(pe.x, pe.y - 45, 10, pele);
+
+    // Corpo (Tronco)
     DrawRectangle(pe.x - 8, pe.y - 35, 16, 20, roupa);
 
+    // Pernas (Simulando movimento se estiver andando)
     float balanco = sinf(GetTime() * 10.0f) * 5.0f;
     if (!IsKeyDown(KEY_RIGHT) && !IsKeyDown(KEY_LEFT) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D)) balanco = 0;
 
+    // Perna Esquerda
     DrawLineEx((Vector2){pe.x - 4, pe.y - 15}, (Vector2){pe.x - 4 + balanco, pe.y}, 4, DARKBLUE);
+    // Perna Direita
     DrawLineEx((Vector2){pe.x + 4, pe.y - 15}, (Vector2){pe.x + 4 - balanco, pe.y}, 4, DARKBLUE);
 
+    // Braços
     if (viradoDireita) {
-        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele);
+        DrawRectangle(pe.x - 2, pe.y - 32, 12, 4, pele); // Aponta pra frente
     } else {
-        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele);
+        DrawRectangle(pe.x - 10, pe.y - 32, 12, 4, pele); // Aponta pra tras
     }
 }
 
 /* --- Funções de Inicialização e Limpeza --- */
 
+// MODIFICADA: Adiciona inicialização das plataformas
 void comecarfase(fases *f, int qtd) {
     if (!f) return;
     int W = GetScreenWidth();
     int H = GetScreenHeight();
 
-    // 🔑 NOVO: CARREGA MÚLTIPLAS TEXTURAS DE OBSTÁCULOS
-    Texture2D obsHorizontalTex = LoadTexture(CAMINHO_OBS_HORIZONTAL);
-    Texture2D obsVerticalCimaTex = LoadTexture(CAMINHO_OBS_VERTICAL_CIMA);
-    Texture2D obsVerticalEsqTex = LoadTexture(CAMINHO_OBS_VERTICAL_ESQ);
-    Texture2D obsVerticalBaixoTex = LoadTexture(CAMINHO_OBS_VERTICAL_BAIXO);
-
-    // Adiciona as texturas ao campo (apenas para ter uma referência para a limpeza)
-    // 💡 OBS: O struct fases foi projetado para apenas UMA textura de obstáculo. 
-    // Para simplificar a limpeza, vamos usar um array temporário e liberá-lo no `acabarFases`.
-    Texture2D obsTexturas[4] = {
-        obsHorizontalTex, 
-        obsVerticalCimaTex, 
-        obsVerticalEsqTex, 
-        obsVerticalBaixoTex
-    };
-    
-    // 🔑 CARREGA A TEXTURA DO PORTAL
-    Texture2D portalTex = LoadTexture(CAMINHO_PORTAL);
-
-
     for (int p = 0; p < qtd; p++) {
         f[p].numero = p + 1;
         f[p].completo = 0;
-        
-        // Atribui a primeira textura carregada (apenas para manter a compatibilidade com a struct)
-        if (p == 0) f[p].texturaObstaculo = obsHorizontalTex; 
-        
+
+        // ----------------------------------------------------
+        // SEU CÓDIGO ORIGINAL DE INICIALIZAÇÃO DE OBSTÁCULOS (MANTIDO)
+        // ----------------------------------------------------
         int n = 4 + p * 2;
         if (p == 3) n = 10;
         if (n > MAX) n = MAX;
@@ -99,67 +86,52 @@ void comecarfase(fases *f, int qtd) {
         if (!f[p].obstaculos) continue;
 
         f[p].posicaoinicial = (Vector2){80, H / 2.0f};
-        
-        // Inicializa o portal e atribui a textura
-        f[p].saida = (portal){{W - 100, H / 2.0f - 50}, {60, 100}, 1, portalTex};
+        f[p].saida = (portal){{W - 100, H / 2.0f - 50}, {60, 100}, 1};
 
         float start = 250;
         float gap = (f[p].saida.posicao.x - 60 - start) / n;
 
-        // --- Inicialização de Obstáculos ---
         for (int i = 0; i < n; i++) {
             obstaculo *o = &f[p].obstaculos[i];
-            
-            // tipo 0 (Horizontal) - Movimenta em Y
-            // tipo 1 (Vertical/Móvel) - Movimenta em X, com variações de textura
-            int tipo = i % 2; 
+            int tipo = i % 2; // 0 = Flecha, 1 = Fogo
             
             float by = H * 0.5f;
-            Vector2 tamanho;
             
-            if (tipo == 0) { 
-                tamanho = (Vector2){60, 20};
+            if (tipo == 0) { // Flecha
+                o->tamanho = (Vector2){60, 20};
                 if (i % 3 == 0) by -= 120;
                 if (i % 3 == 2) by += 120;
-                // 🔑 ATRIBUIÇÃO: Textura Horizontal para o tipo 0
-                o->textura = obsHorizontalTex; 
-            } else { 
-                tamanho = (Vector2){40, 40};
+            } else { // Fogo
+                o->tamanho = (Vector2){40, 40};
                 if (i % 4 == 1) by -= 70;
                 if (i % 4 == 3) by += 70;
-
-                // 🔑 ATRIBUIÇÃO DINÂMICA: Variamos as texturas para o tipo 1
-                int obs_variation = i % 3;
-                if (obs_variation == 0) o->textura = obsVerticalCimaTex;
-                else if (obs_variation == 1) o->textura = obsVerticalEsqTex;
-                else o->textura = obsVerticalBaixoTex;
             }
 
-            Vector2 posicao = (Vector2){start + gap * i + gap * 0.5f, by};
-
-            o->hitbox = (Rectangle){posicao.x, posicao.y, tamanho.x, tamanho.y};
-            
-            bases[p][i] = posicao;
+            bases[p][i] = o->posicao = (Vector2){start + gap * i + gap * 0.5f, by};
             
             float amp = 60.0f + p * 15.0f;
             if (p == 3) amp = 140.0f;
             
-            o->velocidade = (Vector2){(float)tipo, amp}; // Tipo 0 = Mov. Y, Tipo 1 = Mov. X
+            o->velocidade = (Vector2){(float)tipo, amp};
             o->ativo = 1;
         }
+        // ----------------------------------------------------
 
-        // --- Inicialização de Plataformas (Mantida) ---
-        int nPlat = 5 + p * 2;
+        // ==========================================================
+        // 💡 NOVO: INICIALIZAÇÃO E LAYOUT DE PLATAFORMAS
+        // ==========================================================
+        int nPlat = 5 + p * 2; // Progressão: 5, 7, 9, 11 plataformas
         if (nPlat > MAX) nPlat = MAX; 
         
         f[p].quantidadePlataformas = nPlat;
         f[p].plataformas = malloc(sizeof(Plataforma) * nPlat);
         if (!f[p].plataformas) continue;
 
-        float px = 80.0f;
-        float py = H - 150.0f;
-        float gapX = (W - 200.0f) / nPlat;
-        float gapY = 80.0f;
+        // Parâmetros do layout "escadinha"
+        float px = 80.0f; // Posição X inicial
+        float py = H - 150.0f; // Posição Y inicial (do chão para cima)
+        float gapX = (W - 200.0f) / nPlat; // Espaçamento horizontal
+        float gapY = 80.0f; // Espaçamento vertical
         float platW = 80.0f;
         float platH = 20.0f;
 
@@ -171,20 +143,23 @@ void comecarfase(fases *f, int qtd) {
             plat->velocidade = 0.0f;
             plat->tipo = TIPO_PLATAFORMA_FIXA;
 
-            if (p >= 1 && (i % 2 != 0)) {
+            // Dificuldade Progressiva: Plataformas Móveis a partir da Fase 2 (p >= 1)
+            if (p >= 1 && (i % 2 != 0)) { // Plataformas ímpares (i=1, 3, 5...) se movem
+                // Fase 2 e 4 (p=1, 3) movem X. Fase 3 (p=2) move Y.
                 plat->tipo = (p % 2 == 1) ? TIPO_PLATAFORMA_MOVEL_X : TIPO_PLATAFORMA_MOVEL_Y;
-                plat->velocidade = 1.0f + (p * 0.4f); 
+                plat->velocidade = 1.0f + (p * 0.4f); // Velocidade aumenta com a fase
                 plat->direcao = 1;
 
                 if (plat->tipo == TIPO_PLATAFORMA_MOVEL_Y) {
                     plat->limiteA = py - 80;
                     plat->limiteB = py + 40;
-                } else { 
+                } else { // MOVEL_X
                     plat->limiteA = px - 50;
                     plat->limiteB = px + 50;
                 }
             }
 
+            // Próximo degrau (Escadinha)
             px += gapX;
             py -= gapY;
             if (py < 100) py = H - 150.0f; 
@@ -192,54 +167,38 @@ void comecarfase(fases *f, int qtd) {
     }
 }
 
+// MODIFICADA: Adiciona liberação das plataformas
 void acabarFases(fases *f, int qtd) {
-    if (f) {
-        if (qtd > 0) {
-             // O portal é sempre o mesmo
-             if (f[0].saida.textura.id != 0) UnloadTexture(f[0].saida.textura);
-             
-             // 🔑 LIBERA AS 4 TEXTURAS CARREGADAS UMA ÚNICA VEZ
-             if (f[0].obstaculos && f[0].obstaculos[0].textura.id != 0) {
-                 UnloadTexture(f[0].obstaculos[0].textura); // Referência para Horizontal
-             }
-             if (f[0].obstaculos && f[0].obstaculos[1].textura.id != 0) {
-                 UnloadTexture(f[0].obstaculos[1].textura); // Referência para Cima
-             }
-             if (f[0].obstaculos && f[0].obstaculos[3].textura.id != 0) {
-                 UnloadTexture(f[0].obstaculos[3].textura); // Referência para Esquerda
-             }
-             if (f[0].obstaculos && f[0].obstaculos[5].textura.id != 0) {
-                 UnloadTexture(f[0].obstaculos[5].textura); // Referência para Baixo
-             }
-        }
-
-        for (int i = 0; i < qtd; i++) { 
-            free(f[i].obstaculos); 
-            free(f[i].plataformas);
-        }
+    if (f) for (int i = 0; i < qtd; i++) { 
+        free(f[i].obstaculos); 
+        // 💡 NOVO: Libera a memória das Plataformas
+        free(f[i].plataformas);
     }
 }
 
-/* 🚀 FUNÇÃO DE ATUALIZAÇÃO 🚀 */
+/* --- Funções de Jogo (Update e Draw) --- */
+
+// MODIFICADA: Adiciona lógica de movimento e colisão de plataformas
 void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
-    // ... (Mantido sem alteração) ...
     if (!f || !j) return;
     
-    // Checagem de Limite e Game Over
+    // Trava jogador no limite do portal
     if (j->hitbox_jogador.x > f->saida.posicao.x) j->hitbox_jogador.x = f->saida.posicao.x;
+    
     if (j->vida <= 0) { *tela = TELA_GAME_OVER; return; }
 
     int idx = (f->numero > 0) ? f->numero - 1 : 0;
     
-    // CORREÇÃO: Calculamos a Posição Y no Frame ANTERIOR
-    float y_anterior = j->hitbox_jogador.y - j->velocidade_vertical;
-    bool playerOnPlatform = false; 
+    float oldY = j->hitbox_jogador.y; // Posição Y do jogador antes da colisão/movimento
+    bool playerOnPlatform = false; // Flag para rastrear se o jogador está em alguma plataforma
 
-    // --- Lógica de Plataformas (Mantida) ---
+    // ==========================================================
+    // 1. ATUALIZAÇÃO E COLISÃO DAS PLATAFORMAS (NOVA LÓGICA)
+    // ==========================================================
     for (int i = 0; i < f->quantidadePlataformas; i++) {
         Plataforma *plat = &f->plataformas[i];
         
-        // Movimento da Plataforma
+        // Movimento
         if (plat->tipo == TIPO_PLATAFORMA_MOVEL_Y) {
             plat->rect.y += plat->velocidade * plat->direcao;
             if (plat->rect.y >= plat->limiteB) plat->direcao = -1;
@@ -250,31 +209,34 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
             if (plat->rect.x <= plat->limiteA) plat->direcao = 1;
         }
 
-        // LÓGICA DE POUSO SÓLIDO
+        // Colisão com o Jogador (Só se o jogador estiver caindo ou parado e colidindo por cima)
         if (col(j->hitbox_jogador, plat->rect) && 
-            (j->velocidade_vertical >= 0.0f) &&
-            (y_anterior + j->hitbox_jogador.height <= plat->rect.y + 1.0f) ) 
+            (j->hitbox_jogador.y + j->hitbox_jogador.height <= plat->rect.y + plat->rect.height * 0.5f) && 
+            (j->velocidade_vertical >= 0)) 
         {
-            // Colar e Parar:
+            // Reposiciona o jogador na superfície
             j->hitbox_jogador.y = plat->rect.y - j->hitbox_jogador.height;
-            j->velocidade_vertical = 0.0f; 
+            j->velocidade_vertical = 0.0f; // Para a queda
+            // j->estaNoChao deve ser setado no inputs.c, mas garantimos aqui que ele está pousado
             playerOnPlatform = true; 
 
-            // Move o jogador junto com a plataforma
+            // 💡 CRÍTICO: Move o jogador junto com a plataforma
             if (plat->tipo == TIPO_PLATAFORMA_MOVEL_X) {
                 j->hitbox_jogador.x += plat->velocidade * plat->direcao;
             } else if (plat->tipo == TIPO_PLATAFORMA_MOVEL_Y) {
+                // Se a plataforma move Y, o jogador se move junto verticalmente
                 j->hitbox_jogador.y += plat->velocidade * plat->direcao;
             }
         }
     }
     
-    // Atualiza o estado do chão
+    // Se o jogador estava em uma plataforma, garantimos que ele está "no chão" (para poder pular)
     if (playerOnPlatform) j->estaNoChao = 1;
-    else if (j->velocidade_vertical > 0.0f) j->estaNoChao = 0;
 
-
-    // --- Lógica de Obstáculos e Portal ---
+    // ----------------------------------------------------------
+    // SEU CÓDIGO ORIGINAL DE ATUALIZAÇÃO E COLISÃO DE OBSTÁCULOS
+    // (MANTIDO)
+    // ----------------------------------------------------------
     float freq = 1.0f + idx * 0.15f;
     if (idx == 3) freq = 1.4f;
 
@@ -287,108 +249,98 @@ void atualizarFases(fases *f, jogador *j, TelaAtual *tela) {
         float osc = sinf(t * freq + i) * o->velocidade.y;
         Vector2 np = bases[idx][i];
 
-        // o->velocidade.x == 0 -> Tipo 0 (Oscilação em Y - Obstáculo Horizontal)
-        // o->velocidade.x != 0 -> Tipo 1 (Oscilação em X - Obstáculo Vertical/Móvel)
-        if (o->velocidade.x == 0) np.y += osc; 
-        else np.x += osc; 
+        if (o->velocidade.x == 0) np.x += osc; 
+        else np.y += osc; 
         
-        // 💡 Atualiza a posição da hitbox (Rectangle)
-        o->hitbox.x = np.x;
-        o->hitbox.y = np.y;
+        // Limites (MANTIDO)
+        if (np.x < 150) np.x = 150;
+        if (np.x + o->tamanho.x > f->saida.posicao.x - 10) np.x = f->saida.posicao.x - 10 - o->tamanho.x;
         
-        // Limites (Aplicados à hitbox)
-        if (o->hitbox.x < 150) o->hitbox.x = 150;
-        if (o->hitbox.x + o->hitbox.width > f->saida.posicao.x - 10) 
-            o->hitbox.x = f->saida.posicao.x - 10 - o->hitbox.width;
-        
-        if (o->hitbox.y < 30) o->hitbox.y = 30;
-        if (o->hitbox.y + o->hitbox.height > GetScreenHeight() - 20) 
-            o->hitbox.y = GetScreenHeight() - 20 - o->hitbox.height;
+        if (np.y < 30) np.y = 30;
+        if (np.y + o->tamanho.y > GetScreenHeight() - 20) np.y = GetScreenHeight() - 20 - o->tamanho.y;
 
-        // 🔑 Colisão usando o novo campo hitbox
-        if (col(j->hitbox_jogador, o->hitbox)) {
+        o->posicao = np;
+        
+        // Colisão Player (MANTIDO)
+        if (col(j->hitbox_jogador, (Rectangle){np.x, np.y, o->tamanho.x, o->tamanho.y})) {
             j->vida--;
             o->ativo = 0;
             if (j->vida <= 0) *tela = TELA_GAME_OVER;
         }
     }
-    
+    // ----------------------------------------------------------
+
+    // Colisão Portal (MANTIDO)
     if (f->saida.ativo && col(j->hitbox_jogador, (Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100})) {
         f->completo = 1;
         f->saida.ativo = 0;
     }
 }
 
-/* --- Função de Desenho (Mantida) --- */
-
+// MODIFICADA: Adiciona o desenho das plataformas e melhora a bola de fogo
 void desenharFase(fases *f, jogador *j) {
-    // ... (Mantido sem alteração) ...
     if (!f || !j) return;
 
-    // 1. DESENHA O PORTAL
+    // 1. DESENHA O PORTAL (MANTIDO)
     if (f->saida.ativo) {
-        if (f->saida.textura.id != 0) {
-            DrawTextureEx(
-                f->saida.textura, 
-                f->saida.posicao, 
-                0.0f, 
-                f->saida.tamanho.x / f->saida.textura.width, 
-                WHITE 
-            );
-        } else {
-            // Fallback 
-            DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
-            DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE);
-        }
+        DrawRectangleRec((Rectangle){f->saida.posicao.x, f->saida.posicao.y, 60, 100}, DARKBLUE);
+        DrawRectangleLines(f->saida.posicao.x, f->saida.posicao.y, 60, 100, SKYBLUE);
     }
 
-    // 2. DESENHA OS OBSTÁCULOS
+    // 2. DESENHA OS OBSTÁCULOS (MODIFICADO: MELHORIA DA BOLA DE FOGO)
+    float t = GetTime();
     for (int i = 0; i < f->quantidadeObstaculos; i++) {
         obstaculo *o = &f->obstaculos[i];
         if (!o->ativo) continue;
 
-        Texture2D tex = o->textura;
-        Rectangle r = o->hitbox; // Usa a hitbox como destino
-        
-        if (tex.id != 0) {
-            // 🔑 Desenha a textura PNG do obstáculo
-            Rectangle source = { 0.0f, 0.0f, (float)tex.width, (float)tex.height };
+        if (o->velocidade.x == 0) { // Flecha (MANTIDO)
+            DrawRectangle(o->posicao.x, o->posicao.y + 8, o->tamanho.x - 15, 4, BROWN);
+            DrawRectangle(o->posicao.x, o->posicao.y + 6, 10, 8, RED);
+            Vector2 p1 = {o->posicao.x + o->tamanho.x, o->posicao.y + o->tamanho.y/2};
+            Vector2 p2 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y + o->tamanho.y};
+            Vector2 p3 = {o->posicao.x + o->tamanho.x - 15, o->posicao.y};
+            DrawTriangle(p1, p2, p3, LIGHTGRAY);
+        } else { // Fogo (MELHORADO)
+            
+            Vector2 c = {o->posicao.x + o->tamanho.x/2, o->posicao.y + o->tamanho.y/2};
+            float raio_base = o->tamanho.x / 2.0f;
+            
+            // Cria um fator de pulsação suave (realismo)
+            // sinf(t * 12.0f) gera uma oscilação rápida entre -1 e 1
+            float pulso = 1.0f + sinf(t * 12.0f + i * 0.5f) * 0.15f; 
+            float raio = raio_base * pulso; 
 
-            // DrawTexturePro escala a textura para preencher o retângulo 'r' (hitbox)
-            DrawTexturePro(
-                tex, 
-                source, 
-                r, 
-                (Vector2){ 0, 0 }, 
-                0.0f, 
-                WHITE
-            );
-        } else {
-            // FALLBACK: Desenho geométrico antigo (usa o tipo para saber qual desenhar)
-            if (o->velocidade.x == 0) { // Objeto tipo Horizontal (oscilação Y)
-                DrawRectangleRec(r, BROWN); 
-                DrawTriangle(
-                    (Vector2){r.x + r.width, r.y + r.height/2}, 
-                    (Vector2){r.x + r.width - 15, r.y + r.height}, 
-                    (Vector2){r.x + r.width - 15, r.y}, 
-                    RED
-                );
-            } else { // Objeto tipo Vertical (oscilação X)
-                Vector2 center = { r.x + r.width/2, r.y + r.height/2 };
-                DrawCircleV(center, r.width/2, ORANGE); 
-                DrawCircleV(center, r.width/4, YELLOW); 
-            }
+            // --- Camadas Concéntricas para Efeito de Calor/Textura ---
+
+            // 1. Camada Externa (Glow/Calor - Vermelho com Opacidade)
+            // Usamos Fade para simular a neblina de calor e a borda suave.
+            DrawCircleV(c, raio * 1.05f, Fade(RED, 0.4f)); 
+
+            // 2. Camada de Fogo Vermelho/Laranja (Corpo Externo)
+            DrawCircleV(c, raio * 0.9f, (Color){255, 128, 0, 255}); // Laranja/Vermelho (customizado)
+
+            // 3. Camada de Fogo Laranja (Corpo Principal)
+            DrawCircleV(c, raio * 0.7f, ORANGE); 
+
+            // 4. Camada de Fogo Amarelo (Intenso)
+            DrawCircleV(c, raio * 0.5f, YELLOW); 
+            
+            // 5. Núcleo (Branco - O ponto mais quente)
+            DrawCircleV(c, raio * 0.3f, WHITE); 
         }
     }
-
-    // 3. DESENHA AS PLATAFORMAS (Mantido o código)
+    
+    // ==========================================================
+    // 💡 NOVO: 3. DESENHA AS PLATAFORMAS (cor do mapa)
+    // ==========================================================
     for (int i = 0; i < f->quantidadePlataformas; i++) {
         Plataforma *plat = &f->plataformas[i];
         if (!plat->isVisivel) continue;
 
+        // Cor escura, como a do mapa, para camuflar.
         Color corPlataforma = (plat->tipo == TIPO_PLATAFORMA_FIXA) ? DARKGRAY : GRAY;
         
         DrawRectangleRec(plat->rect, corPlataforma);
-        DrawRectangleLinesEx(plat->rect, 2, BLACK);
+        DrawRectangleLinesEx(plat->rect, 2, BLACK); // Borda para destaque
     }
 }

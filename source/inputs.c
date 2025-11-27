@@ -1,17 +1,14 @@
-// inputs.c
-
 #include "../includes/inputs.h"
 #include "raylib.h"
-#include "../includes/structs.h" 
+#include "../includes/structs.h" // Inclua structs.h para ter acesso ao campo estaNoChao
 
-// Ajuste de JOGABILIDADE
-// Mantida baixa para facilitar a colisão com plataformas
-#define GRAVIDADE 0.9f 
-// 💡 AJUSTADO: Aumentado sutilmente para -17.0f.
-#define FORCA_PULO -17.0f 
-#define VELOCIDADE_H 5 // Velocidade de movimento horizontal padrao
+// Ajuste esses valores para ficar "gostoso" de jogar
+#define GRAVIDADE 1.0f      
+#define FORCA_PULO -18.0f // Impulso para cima
 
 void inputs_jogador_movimento(jogador *jogador, int largura_tela, int altura_tela, int velocidade_jogador, obstaculo *obstaculos) {
+
+    // 💡 NOTA: O parâmetro 'obstaculos' não é usado aqui, mas foi mantido na assinatura original.
 
     int moveu = 0;
 
@@ -49,29 +46,30 @@ void inputs_jogador_movimento(jogador *jogador, int largura_tela, int altura_tel
     jogador->hitbox_jogador.y += jogador->velocidade_vertical;
 
     // Colisão com o CHÃO DA TELA
-    int piso_tela = altura_tela - (int)jogador->hitbox_jogador.height;
+    int piso_tela = altura_tela - jogador->hitbox_jogador.height;
 
     if (jogador->hitbox_jogador.y >= piso_tela) {
-        jogador->hitbox_jogador.y = piso_tela;
-        jogador->velocidade_vertical = 0;
-        jogador->estaNoChao = 1; 
+        jogador->hitbox_jogador.y = piso_tela; // Cola no chão
+        jogador->velocidade_vertical = 0;      // Para a queda
+        jogador->estaNoChao = 1;               // Marca que está no chão
     }
 
-    // PULO: Aplica a força negativa (para cima)
+    // PULO: Só pula se apertar e se 'estaNoChao' for 1
+    // Lembre-se: estaNoChao é setado para 1 se estiver no chão da tela OU em uma plataforma (em fases.c)
     if ((IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && jogador->estaNoChao) {
-        // Valor final ajustado: -17.0f
-        jogador->velocidade_vertical = FORCA_PULO; 
-        jogador->estaNoChao = 0; 
+        jogador->velocidade_vertical = FORCA_PULO; // Impulso para cima
+        jogador->estaNoChao = 0;                   // Zera imediatamente para impedir pulo duplo
         moveu = 1;
     }
 
-    // Se está caindo e não está no chão da tela, zera estaNoChao para forçar a checagem em fases.c
+    // Se está caindo (velocidade positiva) e não está no chão da tela, 
+    // zera estaNoChao para forçar a checagem de colisão em fases.c
     if (jogador->velocidade_vertical > 0.0f && jogador->hitbox_jogador.y < piso_tela) {
         jogador->estaNoChao = 0; 
     }
 
-    // Gerenciamento do Sprite (Pulo/Parado)
     if (!jogador->estaNoChao) {
+        // Se estiver pulando ou caindo, mostra sprite de cima/pulo
         jogador->sprite_atual = SPRITE_CIMA; 
     } else if (!moveu) {
         jogador->sprite_atual = SPRITE_PARADO;

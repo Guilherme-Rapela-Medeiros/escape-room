@@ -8,12 +8,18 @@
 #define TRUE 1
 #define FALSE 0
 
+// ==========================================================
+// 💡 ADIÇÃO PARA PLATAFORMAS MÓVEIS
+// ==========================================================
+
+// 1. Tipos de Plataforma
 typedef enum {
     TIPO_PLATAFORMA_FIXA,
     TIPO_PLATAFORMA_MOVEL_X, // Movimento Horizontal
     TIPO_PLATAFORMA_MOVEL_Y  // Movimento Vertical
 } TipoPlataforma;
 
+// 2. Estrutura da Plataforma (Objeto Cinemático)
 typedef struct {
     Rectangle rect;          // Posição (x, y) e tamanho (width, height)
     TipoPlataforma tipo;     // FIXA, MOVEL_X ou MOVEL_Y
@@ -23,8 +29,12 @@ typedef struct {
     float limiteB;       // Ponto máximo (X ou Y)
     float velocidade;    // Velocidade de deslocamento (ex: 2.0f)
     int direcao;         // +1 (A -> B) ou -1 (B -> A)
-    int isVisivel;      // Se a plataforma deve ser desenhada
+    bool isVisivel;      // Se a plataforma deve ser desenhada
 } Plataforma;
+
+// ==========================================================
+// 🔄 ESTRUTURAS EXISTENTES
+// ==========================================================
 
 typedef enum {
     TELA_MENU,
@@ -57,25 +67,16 @@ typedef struct jogador {
 } jogador;
 
 typedef struct obstaculo{
-    // 💡 MODIFICAÇÃO: Usando Rectangle para facilitar colisão e desenho
-    Rectangle hitbox; 
-    
-    // Vector2 posicao; // Removido
-    // Vector2 tamanho; // Removido
-    
+    Vector2 posicao;
+    Vector2 tamanho;
     Vector2 velocidade;
     int ativo;
-    
-    // 💡 MODIFICAÇÃO: Campo para armazenar o PNG do obstáculo
-    Texture2D textura; 
 } obstaculo;
 
 typedef struct portal{
     Vector2 posicao;
     Vector2 tamanho;
     int ativo;
-    // 🔑 CAMPO MANTIDO: Para a textura do PNG
-    Texture2D textura; 
 } portal;
 
 typedef struct fases{
@@ -84,9 +85,6 @@ typedef struct fases{
     // Elementos de Fase
     obstaculo *obstaculos;
     int quantidadeObstaculos;
-    
-    // 💡 MODIFICAÇÃO: Textura padrão para os obstáculos da fase, carregada uma única vez
-    Texture2D texturaObstaculo;
     
     // 💡 MODIFICAÇÃO: Array para as novas plataformas
     Plataforma *plataformas;
